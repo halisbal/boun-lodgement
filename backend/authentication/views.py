@@ -12,6 +12,8 @@ from .constants import ALLOWED_EMAILS, UserRoles
 
 
 class AuthView(APIView):
+    permission_classes = []
+
     def post(self, request, *args, **kwargs):
         email = request.data.get("email")
         password = request.data.get("password")
