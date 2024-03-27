@@ -1,6 +1,10 @@
 from django.db.models import IntegerChoices
 
-ALLOWED_EMAILS = ["halis.bal@std.boun.edu.tr", "emre.sin@std.boun.edu.tr"]
+ALLOWED_EMAILS = [
+    "halis.bal@std.boun.edu.tr",
+    "emre.sin@std.boun.edu.tr",
+    "birkan.yilmaz@bogazici.edu.tr",
+]
 
 
 class UserRoles(IntegerChoices):
