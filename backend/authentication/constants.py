@@ -1,8 +1,8 @@
 from django.db.models import IntegerChoices
 
 ALLOWED_EMAILS = [
-    "halis.bal@std.boun.edu.tr",
-    "emre.sin@std.boun.edu.tr",
+    "halis.bal@std.bogazici.edu.tr",
+    "emre.sin@std.bogazici.edu.tr",
     "birkan.yilmaz@bogazici.edu.tr",
 ]
 
