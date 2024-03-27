@@ -1,5 +1,5 @@
 //const BASE_ENDPOINT = import.meta.env.VITE_BASE_ENDPOINT;
-const BASE_ENDPOINT = "http://127.0.0.1:8080";
+const BASE_ENDPOINT = "http://127.0.0.1:5000";
 const login = async (username, password) => {
   try {
     const response = await fetch(`${BASE_ENDPOINT}/login`, {
@@ -11,11 +11,14 @@ const login = async (username, password) => {
     });
     const data = await response.json();
     if (response.ok) {
+      console.log(response, "authservice login response object")
+      console.log(data, "authservice login data object");
       localStorage.setItem("token", data.token);
       return true;
     }
+    return false;
   } catch (error) {
-    console.error(error);
+    console.error(error, "Failed to login authservice login");
     return false;
   }
 };
@@ -25,14 +28,16 @@ const getUserInfo = async () => {
     const token = localStorage.getItem("token");
     const response = await fetch(`${BASE_ENDPOINT}/getuserinfo`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `${token}`,
       },
     });
-    const data = await response.json();
+    
     if (response.ok) {
+      const data = response.json();
       return data;
     } else {
-      throw new Error(data.message || "Failed to get user info");
+      console.log("Failed to get user info from authservice getUserInfo");
+      return null;
     }
   } catch (error) {
     console.error(error);

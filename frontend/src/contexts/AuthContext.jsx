@@ -11,19 +11,25 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = authService.getToken();
+   
     if (token) {
       authService.getUserInfo().then((response) => {
-        if (response.success) {
-          setUser(response.userInfo);
+        if (response) {
+          setUser(response);
+          console.log(response);
           setIsLoggedIn(true);
         }
       });
+    }
+    else {
+      setIsLoggedIn(false);
     }
   }, []);
 
   const login = async (username, password) => {
     const response = await authService.login(username, password);
     if (response) {
+      console.log("authlogin true response authcontext login");
       setIsLoggedIn(true);
       const userInfo = await authService.getUserInfo();
       if (userInfo) {

@@ -10,6 +10,7 @@ const LoginPage = () => {
     e.preventDefault();
     const response = await login(username, password);
     // Todo: for debugging logs
+    console.log(response);
     if (response) {
       console.log("Login successful");
     } else {
