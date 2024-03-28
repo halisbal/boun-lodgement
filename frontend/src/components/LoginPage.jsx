@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import useAuth from "../hooks/useAuth";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
-const LoginPage = () => {
+const LoginPage = (nextPage) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const navigate = useNavigate();
+  const { login, user } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,6 +15,8 @@ const LoginPage = () => {
     console.log(response);
     if (response) {
       console.log("Login successful");
+      console.log(user);
+      navigate("/home");
     } else {
       console.log("Login failed");
     }

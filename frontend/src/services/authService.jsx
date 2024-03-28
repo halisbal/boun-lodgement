@@ -1,17 +1,21 @@
 //const BASE_ENDPOINT = import.meta.env.VITE_BASE_ENDPOINT;
-const BASE_ENDPOINT = "http://127.0.0.1:5000";
+const BASE_ENDPOINT = "http://127.0.0.1:8000";
 const login = async (username, password) => {
   try {
-    const response = await fetch(`${BASE_ENDPOINT}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username: username, password: password }),
-    });
+    const response = await fetch(
+      `${BASE_ENDPOINT}/api/auth/login/
+    `,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: username, password: password }),
+      }
+    );
     const data = await response.json();
     if (response.ok) {
-      console.log(response, "authservice login response object")
+      console.log(response, "authservice login response object");
       console.log(data, "authservice login data object");
       localStorage.setItem("token", data.token);
       return true;
@@ -26,12 +30,12 @@ const login = async (username, password) => {
 const getUserInfo = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${BASE_ENDPOINT}/getuserinfo`, {
+    const response = await fetch(`${BASE_ENDPOINT}/api/auth/me/`, {
       headers: {
-        Authorization: `${token}`,
+        Authorization: `Token ${token}`,
       },
     });
-    
+
     if (response.ok) {
       const data = response.json();
       return data;

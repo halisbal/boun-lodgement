@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = authService.getToken();
-   
+
     if (token) {
       authService.getUserInfo().then((response) => {
         if (response) {
@@ -20,9 +20,9 @@ export const AuthProvider = ({ children }) => {
           setIsLoggedIn(true);
         }
       });
-    }
-    else {
+    } else {
       setIsLoggedIn(false);
+      setUser(null);
     }
   }, []);
 
