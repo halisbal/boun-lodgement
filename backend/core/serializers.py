@@ -30,6 +30,8 @@ class LodgementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lodgement
         fields = [
+            "id",
+            "name",
             "size",
             "description",
             "image_path",
