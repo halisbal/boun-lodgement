@@ -18,13 +18,16 @@ class BaseModel(models.Model):
 
 
 class Lodgement(BaseModel):
+    name = models.CharField(max_length=255, null=True, blank=True)
     size = models.IntegerField(choices=LodgementSize.choices)
     description = models.TextField()
     image_path = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255)
     is_available = models.BooleanField(default=True)
-    busy_until = models.DateTimeField(null=True)
-    required_documents = models.ManyToManyField("Document", related_name="lodgements")
+    busy_until = models.DateTimeField(null=True, blank=True)
+    required_documents = models.ManyToManyField(
+        "Document", related_name="lodgements", blank=True
+    )
     queue = models.ForeignKey(
         "Queue", on_delete=models.CASCADE, related_name="lodgements"
     )
@@ -60,6 +63,10 @@ class ApplicationDocument(BaseModel):
 class Queue(BaseModel):
     lodgement_type = models.IntegerField(choices=LodgementType.choices)
     personel_type = models.IntegerField(choices=PersonalType.choices)
+    lodgement_size = models.IntegerField(choices=LodgementSize.choices, default=1)
+
+    def __str__(self):
+        return f"{LodgementType.choices[self.lodgement_type - 1][1]} - {PersonalType.choices[self.personel_type - 1][1]} - {LodgementSize.choices[self.lodgement_size - 1][1]}"
 
 
 class Assignment(BaseModel):
