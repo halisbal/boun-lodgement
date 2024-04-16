@@ -23,7 +23,7 @@ class AuthView(APIView):
 
         try:
             user, created = User.objects.get_or_create(
-                email=email, defaults={"role": UserRoles.USER.value}
+                email=email, defaults={"role": UserRoles.USER.value}, username=email
             )
             if created:
                 user.set_password(password)
