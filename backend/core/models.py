@@ -20,6 +20,7 @@ class BaseModel(models.Model):
 class Lodgement(BaseModel):
     size = models.IntegerField(choices=LodgementSize.choices)
     description = models.TextField()
+    image_path = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255)
     is_available = models.BooleanField(default=True)
     busy_until = models.DateTimeField(null=True)
@@ -31,7 +32,7 @@ class Lodgement(BaseModel):
 
 class Document(BaseModel):
     name = models.CharField(max_length=255)
-    form = models.TextField(help_text="Base64 encoded PDF file")
+    pdf_path = models.CharField(max_length=255, null=True, blank=True)
 
 
 class Application(BaseModel):
