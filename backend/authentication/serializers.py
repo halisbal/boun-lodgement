@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .constants import UserRoles
+from constants import UserRoles
 from .models import User
 
 

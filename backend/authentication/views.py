@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import User
 from .serializers import UserSerializer
-from .constants import ALLOWED_EMAILS, UserRoles
+from constants import ALLOWED_EMAILS, UserRoles
 
 
 class AuthView(APIView):
