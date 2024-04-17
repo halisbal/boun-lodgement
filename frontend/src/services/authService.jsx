@@ -1,5 +1,5 @@
 //const BASE_ENDPOINT = import.meta.env.VITE_BASE_ENDPOINT;
-const BASE_ENDPOINT = "http://127.0.0.1:8000";
+const BASE_ENDPOINT = import.meta.env.VITE_BASE_ENDPOINT;
 const login = async (username, password) => {
   try {
     const response = await fetch(

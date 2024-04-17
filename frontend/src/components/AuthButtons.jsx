@@ -1,10 +1,16 @@
 import useAuth from "../hooks/useAuth";
+import { Link } from "react-router-dom";
 
-const LogoutButton = () => {
+const AuthButtons = () => {
   const { isLoggedIn } = useAuth();
 
   if (!isLoggedIn) {
-    return null;
+    return (
+      <Link to="/login" className="text-lg hover:text-gray-300 mr-4">
+        Login
+      </Link>
+    );
+
   } else {
     return (
       <button
@@ -20,4 +26,4 @@ const LogoutButton = () => {
   }
 };
 
-export default LogoutButton;
+export default AuthButtons;
