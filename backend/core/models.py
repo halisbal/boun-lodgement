@@ -2,9 +2,13 @@ from django.db import models
 
 from authentication.models import User
 from constants import (
+    PersonalType,
+)
+from core.constants import (
+    FormType,
+    FormItemTypes,
     LodgementSize,
     ApplicationStatus,
-    PersonalType,
     LodgementType,
 )
 
@@ -35,7 +39,7 @@ class Lodgement(BaseModel):
 
 class Document(BaseModel):
     name = models.CharField(max_length=255)
-    pdf_path = models.CharField(max_length=255, null=True, blank=True)
+    pdf_file = models.FileField(upload_to="documents/")
 
 
 class Application(BaseModel):
@@ -46,8 +50,58 @@ class Application(BaseModel):
     queue = models.ForeignKey(
         "Queue", on_delete=models.CASCADE, related_name="applications"
     )
-    points = models.IntegerField()
     documents = models.ManyToManyField("Document", through="ApplicationDocument")
+
+    @property
+    def scoring_form(self):
+        return self.forms.filter(type=FormType.SCORING).first()
+
+
+class Form(BaseModel):
+    type = models.IntegerField(choices=FormType.choices)
+    application = models.ForeignKey(
+        "Application", on_delete=models.CASCADE, related_name="forms"
+    )
+
+    @property
+    def total_points(self):
+        items = self.items.all()
+        s = 0
+        for item in items:
+            if item.point:
+                if item.field_type == FormItemTypes.INTEGER:
+                    s += item.point * item.answer_value if item.answer_value else 0
+                elif item.field_type == FormItemTypes.BOOLEAN:
+                    s += item.point if item.answer_value else 0
+        return s
+
+
+class FormItem(BaseModel):
+    label = models.TextField()
+    caption = models.TextField()
+    field_type = models.IntegerField(choices=FormItemTypes.choices)
+    form = models.ForeignKey("Form", on_delete=models.CASCADE, related_name="items")
+    point = models.IntegerField(null=True, blank=True)
+    answer = models.JSONField(null=True, blank=True)
+
+    @property
+    def answer_value(self):
+        if self.answer is None or "value" not in self.answer:
+            return None
+
+        value = self.answer.get("value")
+
+        if self.field_type == FormItemTypes.INTEGER:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+        elif self.field_type == FormItemTypes.BOOLEAN:
+            return bool(value)
+        elif self.field_type == FormItemTypes.TEXT:
+            return str(value)
+
+        return None
 
 
 class ApplicationDocument(BaseModel):
@@ -57,6 +111,7 @@ class ApplicationDocument(BaseModel):
     application = models.ForeignKey(
         "Application", on_delete=models.CASCADE, related_name="application_documents"
     )
+    file = models.FileField(upload_to="application_documents/")
     is_approved = models.BooleanField(default=False)
 
 
@@ -64,6 +119,9 @@ class Queue(BaseModel):
     lodgement_type = models.IntegerField(choices=LodgementType.choices)
     personel_type = models.IntegerField(choices=PersonalType.choices)
     lodgement_size = models.IntegerField(choices=LodgementSize.choices, default=1)
+    required_documents = models.ManyToManyField(
+        "Document", related_name="queues", blank=True
+    )
 
     def __str__(self):
         return f"{LodgementType.choices[self.lodgement_type - 1][1]} - {PersonalType.choices[self.personel_type - 1][1]} - {LodgementSize.choices[self.lodgement_size - 1][1]}"

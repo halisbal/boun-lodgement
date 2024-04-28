@@ -1,6 +1,6 @@
 from django.contrib import admin
-
-from constants import LodgementType, PersonalType, LodgementSize
+from constants import PersonalType
+from core.constants import LodgementType, LodgementSize
 from .models import (
     Lodgement,
     Document,
@@ -43,24 +43,25 @@ class LodgementAdmin(admin.ModelAdmin):
 
 
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ["name", "form"]
+    list_display = ["name", "pdf_file"]
     search_fields = ["name"]
 
 
 class ApplicationAdmin(admin.ModelAdmin):
-    list_display = ["user", "status", "points"]
+    list_display = ["user", "status"]
     list_filter = ["status"]
     search_fields = ["user__username", "user__email"]
 
 
 class ApplicationDocumentAdmin(admin.ModelAdmin):
-    list_display = ["document", "application", "is_approved"]
+    list_display = ["document", "application", "is_approved", "file"]
     list_filter = ["is_approved"]
 
 
 class QueueAdmin(admin.ModelAdmin):
-    list_display = ["lodgement_type", "personel_type", "lodgement_size"]
-    list_filter = ["lodgement_type", "personel_type", "lodgement_size"]
+    list_display = [
+        field.name for field in Queue._meta.get_fields() if not field.is_relation
+    ]
 
 
 class AssignmentAdmin(admin.ModelAdmin):

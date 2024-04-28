@@ -19,21 +19,3 @@ class PersonalType(IntegerChoices):
     ACADEMIC = 1, "Akademik"
     ADMINISTRATIVE = 2, "İdari"
     ATTENDANT = 3, "Görevli"
-
-
-class LodgementSize(IntegerChoices):
-    ONE_PLUS_ONE = 1, "1+1"
-    TWO_PLUS_ONE = 2, "2+1"
-
-
-class LodgementType(IntegerChoices):
-    SEQUENTIAL_ALLOCATION = 1, "Sıra Tahsisli"
-    SERVICE_ALLOCATION = 2, "Hizmet Tahsisli"
-    DUTY_ALLOCATION = 3, "Görev Tahsisli"
-
-
-class ApplicationStatus(IntegerChoices):
-    PENDING = 1, "PENDING"
-    APPROVED = 2, "APPROVED"
-    REJECTED = 3, "REJECTED"
-    RE_UPLOAD = 4, "RE_UPLOAD"

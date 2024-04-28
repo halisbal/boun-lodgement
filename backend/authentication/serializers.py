@@ -5,7 +5,7 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    role_name = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -15,10 +15,9 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "email",
             "role",
-            "role_name",
             "is_active",
             "date_joined",
         ]
 
-    def get_role_name(self, obj):
+    def get_role(self, obj):
         return UserRoles(obj.role).label if obj.role in UserRoles.values else "Unknown"
