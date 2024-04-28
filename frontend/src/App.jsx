@@ -6,7 +6,9 @@ import LoginPage from "./components/LoginPage";
 import { Link } from "react-router-dom";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
-import LogoutButton from "./components/LogoutButton";
+import LoggedInHeader from "./components/LoggedInHeader";
+import ListLodgementsPage from "./components/ListLodgementsPage";
+import AuthButtons from "./components/AuthButtons";
 const queryClient = new QueryClient({
   defaultOptions: {
     staleTime: Infinity,
@@ -15,6 +17,9 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+
+
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -31,11 +36,16 @@ const App = () => {
                   className="h-8 w-auto"
                 />
               </Link>
-              <div className="flex items-center">
-                <Link to="/login" className="text-lg hover:text-gray-300 mr-4">
-                  Login
+
+              <LoggedInHeader>
+                <Link to="/logdements" className="text-lg hover:text-gray-300 mr-4">
+                  Lodgements
                 </Link>
-                <LogoutButton />
+              </LoggedInHeader>
+
+
+              <div className="flex items-center">
+                <AuthButtons />
               </div>
             </nav>
           </header>
@@ -46,6 +56,15 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <HomePage />
+                </ProtectedRoute>
+              }
+            ></Route>
+            <Route path="/" element={<LoginPage />}></Route>
+            <Route
+              path="/logdements"
+              element={
+                <ProtectedRoute>
+                  <ListLodgementsPage />
                 </ProtectedRoute>
               }
             ></Route>
