@@ -1,5 +1,7 @@
-from django.db import models
+from datetime import datetime
 
+from django.db import models
+from dateutil.relativedelta import relativedelta
 from authentication.models import User
 from constants import (
     PersonalType,
@@ -38,8 +40,9 @@ class Lodgement(BaseModel):
 
 
 class Document(BaseModel):
-    name = models.CharField(max_length=255)
-    pdf_file = models.FileField(upload_to="documents/")
+    name = models.TextField()
+    description = models.TextField(null=True, blank=True)
+    pdf_file = models.FileField(upload_to="documents/", null=True, blank=True)
 
 
 class Application(BaseModel):
@@ -50,7 +53,6 @@ class Application(BaseModel):
     queue = models.ForeignKey(
         "Queue", on_delete=models.CASCADE, related_name="applications"
     )
-    documents = models.ManyToManyField("Document", through="ApplicationDocument")
 
     @property
     def scoring_form(self):
@@ -73,7 +75,10 @@ class Form(BaseModel):
                     s += item.point * item.answer_value if item.answer_value else 0
                 elif item.field_type == FormItemTypes.BOOLEAN:
                     s += item.point if item.answer_value else 0
-        return s
+        years_waited = relativedelta(
+            datetime.now(), self.created_at.replace(tzinfo=None)
+        ).years
+        return s + years_waited
 
 
 class FormItem(BaseModel):
@@ -109,9 +114,10 @@ class ApplicationDocument(BaseModel):
         "Document", on_delete=models.CASCADE, related_name="application_documents"
     )
     application = models.ForeignKey(
-        "Application", on_delete=models.CASCADE, related_name="application_documents"
+        "Application", on_delete=models.CASCADE, related_name="documents"
     )
     file = models.FileField(upload_to="application_documents/")
+    description = models.TextField()
     is_approved = models.BooleanField(default=False)
 
 

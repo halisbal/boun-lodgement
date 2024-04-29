@@ -1,3 +1,5 @@
+import boto3
+from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -5,14 +7,23 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from src.settings import AWS_STORAGE_BUCKET_NAME
 from .constants import (
     ApplicationStatus,
     FormType,
     SIRA_TAHSIS_4_NOLU_CETVEL_FORM,
     FormItemTypes,
 )
-from .models import Lodgement, Queue, Application, Form, FormItem
-from .serializers import LodgementSerializer, ApplicationSerializer
+from .models import (
+    Lodgement,
+    Queue,
+    Application,
+    Form,
+    FormItem,
+    ApplicationDocument,
+    Document,
+)
+from .serializers import LodgementSerializer, ApplicationSerializer, QueueSerializer
 
 
 class LodgementListView(APIView):
@@ -22,12 +33,41 @@ class LodgementListView(APIView):
         return Response(serializer.data)
 
 
-class ApplyQueueView(APIView):
+class QueueViewSet(viewsets.ModelViewSet):
+    queryset = Queue.objects.all()
+    serializer_class = QueueSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def get_queryset(self):
+        user = self.request.user
+        return Queue.objects.filter(personel_type=user.type)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        if not queryset.exists():
+            return Response(
+                {"error": "Queue not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_queryset().get(pk=kwargs.get("pk"))
+        except Application.DoesNotExist:
+            return Response(
+                {"error": "Queue not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["POST"])
+    def apply(self, request, *args, **kwargs):
         user = request.user
-        queue_id = request.data.get("queue_id")
+        queue_id = kwargs.get("pk")
 
         if not queue_id:
             return JsonResponse(
@@ -39,6 +79,16 @@ class ApplyQueueView(APIView):
         except Queue.DoesNotExist:
             return JsonResponse(
                 {"error": "Queue not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        applications = Application.objects.filter(
+            user=user,
+            queue=queue,
+        ).exclude(status__in=[ApplicationStatus.CANCELLED, ApplicationStatus.REJECTED])
+        if applications.exists():
+            return JsonResponse(
+                {"error": "You already have an active application for this queue"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         application = Application.objects.create(
@@ -169,3 +219,63 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["POST"], url_path="submit-documents")
+    def submit_documents(self, request, pk=None):
+        application = self.get_object()
+
+        if application.status in [
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.CANCELLED,
+        ]:
+            return Response(
+                {
+                    "error": "Cannot submit document for an application that is not active."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = request.data
+
+        if not isinstance(data, list):
+            return Response(
+                {"error": "Invalid data format, expected a list of items"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not data:
+            return Response(
+                {"error": "Document is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        s3 = boto3.client("s3")
+        bucket_name = AWS_STORAGE_BUCKET_NAME
+
+        for obj in data:
+            document_id = obj.get("document_id")
+            document = Document.objects.filter(id=document_id).first()
+            if not document:
+                return Response(
+                    {"error": f"Document with ID {document_id} not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            description = obj.get("description")
+            file = obj.get("file")
+            response = s3.get_object(Bucket=bucket_name, Key=file)
+            if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+                return Response(
+                    {"error": "File not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+            file_content = response["Body"].read()
+            django_file = ContentFile(file_content, name=file.split("/")[-1])
+
+            ApplicationDocument.objects.create(
+                document=document,
+                application=application,
+                description=description,
+                file=django_file,
+            )
+
+        application = self.get_object()
+        serializer = self.get_serializer(application)
+        return Response(serializer.data)

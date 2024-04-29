@@ -43,7 +43,7 @@ class LodgementAdmin(admin.ModelAdmin):
 
 
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ["name", "pdf_file"]
+    list_display = ["name", "pdf_file", "description"]
     search_fields = ["name"]
 
 

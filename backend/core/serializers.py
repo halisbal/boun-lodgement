@@ -3,13 +3,43 @@ from rest_framework import serializers
 from authentication.serializers import UserSerializer
 from constants import PersonalType
 from core.constants import LodgementType, LodgementSize
-from .models import Lodgement, Application, Queue, Form, FormItem
+from .models import (
+    Lodgement,
+    Application,
+    Queue,
+    Form,
+    FormItem,
+    Document,
+    ApplicationDocument,
+)
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ["id", "name", "description", "pdf_file"]
+
+
+class ApplicationDocumentSerializer(serializers.ModelSerializer):
+    document = DocumentSerializer(read_only=True)
+
+    class Meta:
+        model = ApplicationDocument
+        fields = ["file", "description", "is_approved", "document"]
 
 
 class QueueSerializer(serializers.ModelSerializer):
+    required_documents = DocumentSerializer(many=True)
+
     class Meta:
         model = Queue
-        fields = ["id", "lodgement_type", "personel_type", "lodgement_size"]
+        fields = [
+            "id",
+            "lodgement_type",
+            "personel_type",
+            "lodgement_size",
+            "required_documents",
+        ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -89,6 +119,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     scoring_form = serializers.SerializerMethodField()
     total_points = serializers.SerializerMethodField()
+    documents = ApplicationDocumentSerializer(many=True)
 
     class Meta:
         model = Application
