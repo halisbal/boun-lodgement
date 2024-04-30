@@ -19,9 +19,6 @@ const LodgementCard = ({ lodgement }) => {
           <span className={`inline-block ${lodgement.is_available ? 'bg-green-200' : 'bg-red-200'} rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2`}>
             {lodgement.is_available ? 'Available' : 'Not Available'}
           </span>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            {lodgement.is_available ? 'Apply' : 'Join Queue'}
-          </button>
         </div>
       </div>
     );
