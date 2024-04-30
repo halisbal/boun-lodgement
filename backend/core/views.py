@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import boto3
 from django.core.files.base import ContentFile
 from django.http import JsonResponse
@@ -219,6 +221,46 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["GET"], url_path="submit-documents/presigned-url")
+    def get_presigned_url(self, request, pk=None):
+        application = self.get_object()
+
+        if application.status in [
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.CANCELLED,
+        ]:
+            return Response(
+                {
+                    "error": "Cannot submit document for an application that is not active."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        document_id = request.query_params.get("document_id")
+        if not document_id:
+            return Response(
+                {"error": "Document ID is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        document = Document.objects.filter(id=document_id).first()
+        if not document:
+            return Response(
+                {"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        s3 = boto3.client("s3")
+        bucket_name = AWS_STORAGE_BUCKET_NAME
+        file_name = (
+            f"{request.user.email}-{document.name}-{datetime.now().isoformat()}"
+        )
+        presigned_url = s3.generate_presigned_url(
+            "put_object",
+            Params={"Bucket": bucket_name, "Key": file_name},
+            ExpiresIn=3600,
+        )
+
+        return Response({"url": presigned_url})
 
     @action(detail=True, methods=["POST"], url_path="submit-documents")
     def submit_documents(self, request, pk=None):
