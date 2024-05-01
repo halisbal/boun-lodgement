@@ -9,6 +9,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import LoggedInHeader from "./components/LoggedInHeader";
 import ListLodgementsPage from "./components/ListLodgementsPage";
 import AuthButtons from "./components/AuthButtons";
+import ApplyPage from "./components/ApplyPage";
+import { List } from "@material-tailwind/react";
+import ListApplicationsPage from "./components/ListApplicationsPage";
+import ApplicationDetailPage from "./components/ApplicationDetailPage";
 const queryClient = new QueryClient({
   defaultOptions: {
     staleTime: Infinity,
@@ -24,32 +28,30 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <header className="bg-gray-800 text-white p-4">
-            <nav className="flex justify-between items-center">
-              <Link
-                to="/home"
-                className="text-xl font-semibold hover:text-gray-300"
-              >
-                <img
-                  src="/boun_logo.svg"
-                  alt="Bogazici University Logo"
-                  className="h-8 w-auto"
-                />
-              </Link>
-
-              <LoggedInHeader>
-                <Link to="/logdements" className="text-lg hover:text-gray-300 mr-4">
-                  Lodgements
-                </Link>
-              </LoggedInHeader>
-
-
-              <div className="flex items-center">
-                <AuthButtons />
+          <header className="bg-white-900 text-white p-4">
+            <nav className="">
+              <div className="container mx-auto flex justify-between items-center">
+                <div className="flex items-center">
+                  <Link to="/home" className="mx-4"> <img src="/boun_logo.svg" alt="Bogazici University Logo" className="h-8 w-auto" /> </Link>
+                  <LoggedInHeader>
+                    <Link to="/logdements" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Lodgements </Link>
+                  </LoggedInHeader>
+                  <LoggedInHeader>
+                    <Link to="/apply" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Apply </Link>
+                  </LoggedInHeader>
+                  <LoggedInHeader>
+                    <Link to="/my-applications" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> My Applications </Link>
+                  </LoggedInHeader>
+                </div>
+                <div>
+                  <div className="flex items-center">
+                    <AuthButtons />
+                  </div>
+                </div>
               </div>
             </nav>
           </header>
-
+          
           <Routes>
             <Route
               path="/home"
@@ -68,7 +70,24 @@ const App = () => {
                 </ProtectedRoute>
               }
             ></Route>
+            <Route
+              path="/apply"
+              element={
+                <ProtectedRoute>
+                  <ApplyPage />
+                </ProtectedRoute>
+              }
+            ></Route>
+            <Route
+              path="/my-applications"
+              element={
+                <ProtectedRoute>
+                  <ListApplicationsPage />
+                </ProtectedRoute>
+              }
+            ></Route>
             <Route path="/login" element={<LoginPage />}></Route>
+            <Route path="/application/:id" element={<ApplicationDetailPage />}></Route>
           </Routes>
         </QueryClientProvider>
       </BrowserRouter>

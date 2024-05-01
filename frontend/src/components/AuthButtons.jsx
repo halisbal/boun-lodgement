@@ -1,3 +1,4 @@
+import { Button } from "@material-tailwind/react";
 import useAuth from "../hooks/useAuth";
 import { Link } from "react-router-dom";
 
@@ -6,22 +7,22 @@ const AuthButtons = () => {
 
   if (!isLoggedIn) {
     return (
-      <Link to="/login" className="text-lg hover:text-gray-300 mr-4">
+      <Link to="/login" className="text-lg text-black hover:text-gray-700 mr-4">
         Login
       </Link>
     );
 
   } else {
     return (
-      <button
-        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+      <Button
+        className="px-4 py-2" color="red" variant="outlined"
         onClick={() => {
           localStorage.removeItem("token");
           window.location.reload();
         }}
       >
         Logout
-      </button>
+      </Button>
     );
   }
 };
