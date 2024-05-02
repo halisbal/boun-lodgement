@@ -256,7 +256,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             config=Config(signature_version="s3v4"),
         )
         bucket_name = AWS_STORAGE_BUCKET_NAME
-        file_name = f"default/application-documents/{request.user.email}-{document.name}-{datetime.now().isoformat()}"
+        file_name = f"default/application_documents/{request.user.email}-{document.name}-{datetime.now().isoformat()}"
         presigned_url = s3.generate_presigned_post(
             Bucket=bucket_name,
             Key=file_name,
