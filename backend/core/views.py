@@ -251,16 +251,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         s3 = boto3.client("s3")
         bucket_name = AWS_STORAGE_BUCKET_NAME
-        file_name = (
-            f"default/application-documents/{request.user.email}-{document.name}-{datetime.now().isoformat()}"
-        )
-        presigned_url = s3.generate_presigned_url(
-            "put_object",
-            Params={"Bucket": bucket_name, "Key": file_name},
+        file_name = f"default/application-documents/{request.user.email}-{document.name}-{datetime.now().isoformat()}"
+        presigned_url = s3.generate_presigned_post(
+            Bucket=bucket_name,
+            Key=file_name,
+            Fields=None,
+            Conditions=None,
             ExpiresIn=3600,
         )
 
-        return Response({"url": presigned_url})
+        return Response(presigned_url)
 
     @action(detail=True, methods=["POST"], url_path="submit-documents")
     def submit_documents(self, request, pk=None):
