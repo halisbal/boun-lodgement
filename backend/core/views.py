@@ -248,11 +248,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND
             )
+        from botocore.client import Config
 
         s3 = boto3.client(
             "s3",
             region_name="eu-central-1",
-            config=boto3.session.Config(signature_version="s3v4"),
+            config=Config(signature_version="s3v4"),
         )
         bucket_name = AWS_STORAGE_BUCKET_NAME
         file_name = f"default/application-documents/{request.user.email}-{document.name}-{datetime.now().isoformat()}"
