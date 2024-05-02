@@ -252,7 +252,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         s3 = boto3.client("s3")
         bucket_name = AWS_STORAGE_BUCKET_NAME
         file_name = (
-            f"{request.user.email}-{document.name}-{datetime.now().isoformat()}"
+            f"default/application-documents/{request.user.email}-{document.name}-{datetime.now().isoformat()}"
         )
         presigned_url = s3.generate_presigned_url(
             "put_object",
