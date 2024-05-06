@@ -8,6 +8,7 @@ from .models import (
     ApplicationDocument,
     Queue,
     Assignment,
+    ScoringFormItem,
 )
 
 
@@ -64,6 +65,14 @@ class QueueAdmin(admin.ModelAdmin):
     ]
 
 
+class ScoringFormItemAdmin(admin.ModelAdmin):
+    list_display = [
+        field.name
+        for field in ScoringFormItem._meta.get_fields()
+        if not field.is_relation
+    ]
+
+
 class AssignmentAdmin(admin.ModelAdmin):
     list_display = [
         "application",
@@ -83,3 +92,4 @@ admin.site.register(Application, ApplicationAdmin)
 admin.site.register(ApplicationDocument, ApplicationDocumentAdmin)
 admin.site.register(Queue, QueueAdmin)
 admin.site.register(Assignment, AssignmentAdmin)
+admin.site.register(ScoringFormItem, ScoringFormItemAdmin)

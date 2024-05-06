@@ -24,8 +24,15 @@ from .models import (
     FormItem,
     ApplicationDocument,
     Document,
+    ScoringFormItem,
+    ScoringFormLog,
 )
-from .serializers import LodgementSerializer, ApplicationSerializer, QueueSerializer
+from .serializers import (
+    LodgementSerializer,
+    ApplicationSerializer,
+    QueueSerializer,
+    ScoringFormItemSerializer,
+)
 
 
 class LodgementListView(APIView):
@@ -33,6 +40,35 @@ class LodgementListView(APIView):
         lodgements = Lodgement.objects.all()
         serializer = LodgementSerializer(lodgements, many=True)
         return Response(serializer.data)
+
+
+class ScoringFormViewSet(viewsets.ModelViewSet):
+    queryset = ScoringFormItem.objects.all()
+    serializer_class = ScoringFormItemSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ScoringFormItem.objects.filter(type=FormType.SCORING)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        if not queryset.exists():
+            return Response(
+                {"error": "Scoring form not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["GET"])
+    def get_latest(self, request, *args, **kwargs):
+        user = request.user
+        print(user)
+        log = ScoringFormLog.objects.filter(user=user).last()
+        print(log)
+        data = log.data
+        return Response(data)
 
 
 class QueueViewSet(viewsets.ModelViewSet):
@@ -109,6 +145,70 @@ class QueueViewSet(viewsets.ModelViewSet):
 
         serializer = ApplicationSerializer(application)
         return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["POST"])
+    def evaluate(self, request, *args, **kwargs):
+        user = request.user
+        form_data = request.data
+
+        queue_id = kwargs.get("pk")
+        queue = Queue.objects.filter(id=queue_id).first()
+
+        if not isinstance(form_data, list):
+            return Response(
+                {"error": "Invalid data format, expected a list of items"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        total_points = 0
+        for item in form_data:
+            scoring_form_item_id = item.get("scoring_form_item_id")
+            answer = item.get("answer")
+
+            if scoring_form_item_id is None or answer is None:
+                continue
+
+            scoring_form_item = ScoringFormItem.objects.filter(
+                id=scoring_form_item_id
+            ).first()
+            if not scoring_form_item:
+                continue
+
+            if scoring_form_item.field_type == FormItemTypes.INTEGER:
+                if not isinstance(answer, int):
+                    return Response(
+                        {"error": "Invalid data type for an answer"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            elif scoring_form_item.field_type == FormItemTypes.BOOLEAN:
+                if not isinstance(answer, int):
+                    return Response(
+                        {"error": "Invalid data type for an answer"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            total_points += scoring_form_item.point * answer
+
+        ScoringFormLog.objects.create(user=user, data=form_data)
+
+        applications = queue.applications.filter(
+            status__in=[ApplicationStatus.PENDING],
+        )
+
+        current_rank = 1
+        for application in applications:
+            if application.user == user:
+                continue
+            if application.total_points > total_points:
+                current_rank += 1
+
+        return Response(
+            {
+                "total_points": total_points,
+                "rank": current_rank,
+                "approximate_availability": "1 month",
+            }
+        )
 
 
 class ApplicationViewSet(viewsets.ModelViewSet):

@@ -142,3 +142,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_total_points(self, obj):
         return obj.scoring_form.total_points
+
+
+class ScoringFormItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormItem
+        fields = ["id", "label", "caption", "field_type", "point"]

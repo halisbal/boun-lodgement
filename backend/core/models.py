@@ -144,3 +144,18 @@ class Assignment(BaseModel):
     end_date = models.DateTimeField()
     status = models.IntegerField()
     is_deposit_paid = models.BooleanField(default=False)
+
+
+class ScoringFormItem(models.Model):
+    type = models.IntegerField(choices=FormType.choices)
+    label = models.TextField()
+    caption = models.TextField()
+    field_type = models.IntegerField(choices=FormItemTypes.choices)
+    point = models.IntegerField(null=True, blank=True)
+
+
+class ScoringFormLog(models.Model):
+    data = models.JSONField()
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="scoring_form_logs"
+    )
