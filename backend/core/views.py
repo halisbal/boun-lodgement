@@ -66,9 +66,7 @@ class ScoringFormViewSet(viewsets.ModelViewSet):
         user = request.user
         log = ScoringFormLog.objects.filter(user=user).last()
         if not log:
-            return Response(
-                {"error": "No scoring form log found"}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response([])
         data = log.data
         return Response(data)
 
