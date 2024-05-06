@@ -65,6 +65,10 @@ class ScoringFormViewSet(viewsets.ModelViewSet):
     def get_latest(self, request, *args, **kwargs):
         user = request.user
         log = ScoringFormLog.objects.filter(user=user).last()
+        if not log:
+            return Response(
+                {"error": "No scoring form log found"}, status=status.HTTP_404_NOT_FOUND
+            )
         data = log.data
         return Response(data)
 
@@ -134,7 +138,7 @@ class QueueViewSet(viewsets.ModelViewSet):
         form = Form.objects.create(type=FormType.SCORING, application=application)
 
         log = ScoringFormLog.objects.filter(user=user).last()
-        data = log.data
+        data = log.data if log else []
         for item in data:
             item["label"] = (
                 ScoringFormItem.objects.filter(id=item.get("scoring_form_item_id"))
