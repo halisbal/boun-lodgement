@@ -278,6 +278,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["POST"], url_path="submit-scoring-form")
     def submit_scoring_form(self, request, pk=None):
+        # todo: add scoring form log
         application = self.get_object()
         scoring_form = application.scoring_form
 

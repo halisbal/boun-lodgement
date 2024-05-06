@@ -1,3 +1,4 @@
+import pytz
 from rest_framework import serializers
 
 from authentication.serializers import UserSerializer
@@ -120,6 +121,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     scoring_form = serializers.SerializerMethodField()
     total_points = serializers.SerializerMethodField()
     documents = ApplicationDocumentSerializer(many=True)
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -131,6 +133,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "scoring_form",
             "documents",
             "total_points",
+            "created_at",
         ]
 
     def get_status(self, obj):
@@ -142,6 +145,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_total_points(self, obj):
         return obj.scoring_form.total_points
+
+    def get_created_at(self, obj):
+        return obj.created_at.astimezone(tz=pytz.timezone("Asia/Istanbul")).strftime(
+            "%d %B %Y, %H:%M"
+        )
+
+    # todo: add rank and estimated availability
 
 
 class ScoringFormItemSerializer(serializers.ModelSerializer):
