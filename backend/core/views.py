@@ -64,9 +64,7 @@ class ScoringFormViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["GET"])
     def get_latest(self, request, *args, **kwargs):
         user = request.user
-        print(user)
         log = ScoringFormLog.objects.filter(user=user).last()
-        print(log)
         data = log.data
         return Response(data)
 
@@ -135,12 +133,27 @@ class QueueViewSet(viewsets.ModelViewSet):
 
         form = Form.objects.create(type=FormType.SCORING, application=application)
 
+        log = ScoringFormLog.objects.filter(user=user).last()
+        data = log.data
+        for item in data:
+            item["label"] = (
+                ScoringFormItem.objects.filter(id=item.get("scoring_form_item_id"))
+                .first()
+                .label
+            )
+
         for item in SIRA_TAHSIS_4_NOLU_CETVEL_FORM:
+            answer = None
+            for item_data in data:
+                if item_data["label"] == item["label"]:
+                    answer = item_data["answer"]
+                    break
             form.items.create(
                 label=item["label"],
                 caption=item["caption"],
                 field_type=item["field_type"],
                 point=item["point"],
+                answer={"value": answer},
             )
 
         serializer = ApplicationSerializer(application)
