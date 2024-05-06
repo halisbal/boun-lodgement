@@ -145,6 +145,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
 
 class ScoringFormItemSerializer(serializers.ModelSerializer):
+    field_type = serializers.SerializerMethodField()
+
     class Meta:
         model = FormItem
         fields = ["id", "label", "caption", "field_type", "point"]
+
+    def get_field_type(self, obj):
+        return obj.get_field_type_display()
