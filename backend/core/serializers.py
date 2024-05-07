@@ -160,10 +160,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_estimated_availability(self, obj):
         if obj.queue.lodgements.count() == 0:
-            return "No lodgements is reserved for this queue."
+            return "No lodgements found."
 
         if obj.queue.lodgements.filter(busy_until=None).exists():
-            return "There are currently available lodgements for this queue."
+            return "Available"
 
         min_busy_until = obj.queue.lodgements.aggregate(Min("busy_until"))[
             "busy_until__min"

@@ -1,7 +1,9 @@
 from datetime import datetime
 
 import boto3
+import pytz
 from django.core.files.base import ContentFile
+from django.db.models import Min
 from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -217,11 +219,25 @@ class QueueViewSet(viewsets.ModelViewSet):
             if application.total_points > total_points:
                 current_rank += 1
 
+        approximate_availability = ""
+        if queue.lodgements.count() == 0:
+            approximate_availability = "No lodgements found."
+        elif queue.lodgements.filter(busy_until=None).exists():
+            approximate_availability = "Available"
+        else:
+            min_busy_until = queue.lodgements.aggregate(Min("busy_until"))[
+                "busy_until__min"
+            ].date()
+
+            approximate_availability = min_busy_until.astimezone(
+                tz=pytz.timezone("Asia/Istanbul")
+            ).strftime("%d %B %Y, %H:%M")
+
         return Response(
             {
                 "total_points": total_points,
                 "rank": current_rank,
-                "approximate_availability": "1 month",
+                "approximate_availability": approximate_availability,
             }
         )
 
