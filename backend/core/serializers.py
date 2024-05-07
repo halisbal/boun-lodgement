@@ -1,9 +1,12 @@
+from datetime import datetime
+
 import pytz
+from django.db.models import Min
 from rest_framework import serializers
 
 from authentication.serializers import UserSerializer
 from constants import PersonalType
-from core.constants import LodgementType, LodgementSize
+from core.constants import LodgementType, LodgementSize, ApplicationStatus
 from .models import (
     Lodgement,
     Application,
@@ -122,6 +125,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     total_points = serializers.SerializerMethodField()
     documents = ApplicationDocumentSerializer(many=True)
     created_at = serializers.SerializerMethodField()
+    estimated_availability = serializers.SerializerMethodField()
+    rank = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -134,6 +139,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "documents",
             "total_points",
             "created_at",
+            "estimated_availability",
+            "rank",
         ]
 
     def get_status(self, obj):
@@ -151,7 +158,32 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "%d %B %Y, %H:%M"
         )
 
-    # todo: add rank and estimated availability
+    def get_estimated_availability(self, obj):
+        if obj.queue.lodgements.count() == 0:
+            return "No lodgements is reserved for this queue."
+
+        if obj.queue.lodgements.filter(busy_until=None).exists():
+            return "There are currently available lodgements for this queue."
+
+        min_busy_until = obj.queue.lodgements.aggregate(Min("busy_until"))[
+            "busy_until__min"
+        ].date()
+
+        return min_busy_until.astimezone(tz=pytz.timezone("Asia/Istanbul")).strftime(
+            "%d %B %Y, %H:%M"
+        )
+
+    def get_rank(self, obj):
+        applications = obj.queue.applications.filter(
+            status__in=[ApplicationStatus.PENDING],
+        )
+        current_rank = 1
+        for application in applications:
+            if application.user == obj.user:
+                continue
+            if application.total_points > obj.scoring_form.total_points:
+                current_rank += 1
+        return current_rank
 
 
 class ScoringFormItemSerializer(serializers.ModelSerializer):

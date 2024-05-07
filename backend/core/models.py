@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import cached_property
 
 from django.db import models
 from dateutil.relativedelta import relativedelta
@@ -65,7 +66,7 @@ class Form(BaseModel):
         "Application", on_delete=models.CASCADE, related_name="forms"
     )
 
-    @property
+    @cached_property
     def total_points(self):
         items = self.items.all()
         s = 0
