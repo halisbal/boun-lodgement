@@ -219,7 +219,6 @@ class QueueViewSet(viewsets.ModelViewSet):
             if application.total_points > total_points:
                 current_rank += 1
 
-        approximate_availability = ""
         if queue.lodgements.count() == 0:
             approximate_availability = "No lodgements found."
         elif queue.lodgements.filter(busy_until=None).exists():
@@ -294,7 +293,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["POST"], url_path="submit-scoring-form")
     def submit_scoring_form(self, request, pk=None):
-        # todo: add scoring form log
         application = self.get_object()
         scoring_form = application.scoring_form
 
@@ -310,6 +308,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid data format, expected a list of items"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        log_data = []
 
         try:
             for item in form_data:
@@ -345,9 +345,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
 
+                if ScoringFormItem.objects.filter(label=form_item.label).exists():
+                    log_data.append(
+                        {
+                            "scoring_form_item_id": ScoringFormItem.objects.filter(
+                                label=form_item.label
+                            )
+                            .first()
+                            .id,
+                            "answer": answer,
+                        }
+                    )
                 form_item.answer = {"value": answer}
                 form_item.save()
 
+            if log_data:
+                ScoringFormLog.objects.create(user=request.user, data=log_data)
             serializer = self.get_serializer(application)
             return Response(serializer.data)
 
