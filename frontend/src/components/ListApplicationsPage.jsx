@@ -12,6 +12,7 @@ export default function ListApplicationsPage() {
     if (status === 'error') {
         return <div>Error: {error.message}</div>
     }
+    console.log(data);
 
 
 
@@ -35,19 +36,19 @@ export default function ListApplicationsPage() {
                                     statusColor = 'text-red-500'
                                 }
 
-                                return(
-                                <Link to={`/application/${application.id}`}>
-                                    <ListItem key={application.id}>
-                                        <div className="flex justify-between w-full">
-                                            <div className="flex flex-col">
-                                                <label>{application.queue.lodgement_type} - {application.queue.personel_type} - {application.queue.lodgement_size}</label>
+                                return (
+                                    <Link to={`/application/${application.id}`}>
+                                        <ListItem key={application.id}>
+                                            <div className="flex justify-between w-full">
+                                                <div className="flex flex-col">
+                                                    <label>{application.queue.lodgement_type} - {application.queue.personel_type} - {application.queue.lodgement_size}</label>
+                                                </div>
+                                                <div>
+                                                    <label className={statusColor}>{application.status}</label>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className={statusColor}>{application.status}</label>
-                                            </div>
-                                        </div>
-                                    </ListItem>
-                                </Link>)
+                                        </ListItem>
+                                    </Link>)
                             }
                             )}
                         </List>

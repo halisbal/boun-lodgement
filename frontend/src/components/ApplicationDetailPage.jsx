@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useState } from "react";
 import fetchApplicationDetail from "../fetchs/fetchApplicationDetail";
+import { apiService } from "../services/apiService";
 
 
 const ApplicationDetailPage = () => {
@@ -13,14 +14,28 @@ const ApplicationDetailPage = () => {
 
     const [formValues, setFormValues] = useState({});
     const [selectedDocument, setSelectedDocument] = useState();
+    const [file, setFile] = useState();
+    const [uploadedDocs, setUploadedDocs] = useState([]);
 
     // Initialize form values when data is loaded
     useEffect(() => {
+        console.log(data);
+        data?.scoring_form?.items.sort((a, b) => a.id - b.id);
         const initialValues = {};
         data?.scoring_form?.items.forEach(item => {
-            initialValues[item.id] = item.answer ? item.answer.value : '';
+            initialValues[item.id] = item.answer ? item.answer?.value : null;
+            console.log(item);
         });
         setFormValues(initialValues);
+
+        const arr = [];
+        data?.documents.forEach((doc) => {
+            arr.push({ is_approved: doc.is_approved, name: doc.document.name, description: doc.description, link: doc.file });
+        });
+
+        console.log(arr);
+        setUploadedDocs(arr)
+
     }, [data]);
 
     if (status === 'loading') return <div>Loading...</div>;
@@ -28,29 +43,116 @@ const ApplicationDetailPage = () => {
     if (!data) return <div>No data found.</div>;
 
     const handleChange = (id, event, type) => {
-        const value = type === "Boolean" ? event.target.checked : event.target.value;
+        const value = type === "Boolean" ? event.target.checked : parseInt(event.target.value);
         setFormValues(prev => ({ ...prev, [id]: value }));
     };
 
     const handleSubmit = (event) => {
         event.preventDefault();
         console.log("Submitting", formValues);
+        const arr = [];
+        for (const [key, value] of Object.entries(formValues)) {
+            arr.push({ form_item_id: key, answer: value });
+        }
+
         // Here you would typically use fetch or axios to send `formValues` to the server
+
+        apiService.post(`/application/${id}/submit-scoring-form/`, arr)
+
     };
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         console.log("File selected", file);
+        setFile(file);
         // Here you would typically use fetch or axios to send `file` to the server
+
+    }
+
+    const handleUploadDocumentClick = async () => {
+        const presigned_url = await apiService.get(`/application/${id}/submit-documents/presigned-url/?document_id=${selectedDocument}&file_format=${file.name.split('.').pop()}`);
+        console.log(file.name.split('.').pop());
+        console.log("Uploading document", presigned_url);
+        let formData = new FormData();
+        Object.entries(presigned_url.fields).forEach(([key, value]) => {
+            formData.append(key, value);
+        });
+        formData.append('file', file);
+
+        fetch(presigned_url.url, {
+            method: "POST",
+            body: formData,
+        }).then(response => {
+            if (response.ok) {
+                console.log('Upload successful');
+                return response; // or response.json() if the response is JSON
+            } else {
+                console.error('Upload failed');
+                return response.text().then(text => Promise.reject(text));
+            }
+        }).then(data => {
+            console.log(data);
+        }).catch(error => {
+            console.error('Error during upload:', error);
+        });
+
+
+        apiService.post(`/application/${id}/submit-documents/`, [{ document_id: selectedDocument, file: presigned_url?.fields.key, description: "Uploaded document" }]);
+        setUploadedDocs(prev => [...prev, { name: file.name, is_approved: false, link: presigned_url?.fields.key }]);
     }
 
     return (
-        <div className="bg-gray-100">
-            <div>
+        <div className="bg-gray-100 p-14">
+            <div className="w-8/12 mx-auto ">
+                <label className="text-2xl">BAŞVURU DETAY</label>
+            </div>
+            <div className="w-2/3 mx-auto mt-6 bg-white rounded-xl shadow-md">
+                <List>
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <label className="">Queue:</label>
+                            <label className="text-center block">{data?.queue.lodgement_type + " " + data?.queue.personel_type + " " + data?.queue.lodgement_size}</label>
+                        </div>
+                    </ListItem>
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <label className="">Başvuru Tarihi:</label>
+                            <label className="text-center block">{data?.created_at}</label>
+                        </div>
+                    </ListItem>
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <label className="">Başvuru Durumu:</label>
+                            <label className="text-center block">{data?.status}</label>
+                        </div>
+                    </ListItem>
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <label className="">Rank:</label>
+                            <label className="text-center block">{data?.rank}</label>
+                        </div>
+                    </ListItem>
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <label className="">Estimated Availability Date:</label>
+                            <label className="text-center block">{data?.estimated_availability}</label>
+                        </div>
+                    </ListItem>
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <label className="">Total Points:</label>
+                            <label className="text-center block">{data?.total_points}</label>
+                        </div>
+                    </ListItem>
+
+                </List>
 
             </div>
 
-            <span className="m-4 p-4"><label className="text-3xl">BAŞVURU CETVELİ</label></span>
+
+            <div className="w-8/12 mx-auto mt-12">
+                <label className="text-2xl">BAŞVURU CETVELİ</label>
+            </div>
 
             <div className="flex flex-col items-center mt-6">
                 <Card className="w-8/12 shadow">
@@ -81,7 +183,7 @@ const ApplicationDetailPage = () => {
                             </ListItem>
                         ))}
                     </List>
-                    <Button type="submit" className="w-6/12 mx-auto py-4 mt-4 mb-6">Submit</Button>
+                    <Button onClick={handleSubmit} className="w-6/12 mx-auto py-4 mt-4 mb-6">Submit</Button>
                 </Card>
 
 
@@ -115,10 +217,30 @@ const ApplicationDetailPage = () => {
                             <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
                         </div>
-                        <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange}/>
+                        <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
                     </label>
                 </div>
-                <Button className="w-1/3 p-4 my-6" color="green">Upload</Button>
+                <div className="w-8/12">
+
+                    <List>
+                        {uploadedDocs.map((doc) => (
+                            <ListItem key={doc.name} className="w-full">
+                                <div className="flex justify-between w-full items-center">
+                                    <div>
+                                        <a href={doc.link}>{doc.name}</a>
+                                    </div>
+                                    <div>
+                                        <label className="">{doc.is_approved ? "Approved" : "Not Approved"}</label>
+                                    </div>
+                                </div>
+                            </ListItem>
+                        ))}
+                    </List>
+
+
+
+                </div>
+                <Button disabled={selectedDocument === undefined ? true : false} className="w-1/3 p-4 my-6" color="green" onClick={handleUploadDocumentClick}>Upload</Button>
 
 
             </div>
