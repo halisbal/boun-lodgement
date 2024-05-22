@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
 from django.db.models import IntegerChoices
 
 
@@ -19,6 +22,14 @@ class ApplicationStatus(IntegerChoices):
     REJECTED = 4, "Rejected"
     RE_UPLOAD = 5, "Re Upload"
     CANCELLED = 6, "Cancelled"
+    ASSIGNED = 7, "Assigned"
+
+
+class AssignmentStatus(IntegerChoices):
+    LOCKED = 1, "Locked"
+    ACTIVE = 2, "Active"
+    CANCELLED = 3, "Cancelled"
+    FINISHED = 4, "Finished"
 
 
 class FormType(IntegerChoices):
@@ -93,3 +104,19 @@ SIRA_TAHSIS_4_NOLU_CETVEL_FORM = [
         "point": 5,
     },
 ]
+
+
+def days_until(target_date):
+    if target_date is None:
+        return "No available lodgements."
+    # Get the current date and time
+    current_date = datetime.now(target_date.tzinfo)
+
+    delta = relativedelta(target_date, current_date)
+
+    if delta.years > 0:
+        return f"in {delta.years} years, {delta.months} months and {delta.days} days"
+    elif delta.months > 0:
+        return f"in {delta.months} months and {delta.days} days"
+    else:
+        return f"in {delta.days} days"

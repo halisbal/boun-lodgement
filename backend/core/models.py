@@ -3,6 +3,10 @@ from functools import cached_property
 
 from django.db import models
 from dateutil.relativedelta import relativedelta
+from django.db.models import Q
+from django.utils import timezone
+import bisect
+
 from authentication.models import User
 from constants import (
     PersonalType,
@@ -13,6 +17,7 @@ from core.constants import (
     LodgementSize,
     ApplicationStatus,
     LodgementType,
+    AssignmentStatus,
 )
 
 
@@ -132,6 +137,103 @@ class Queue(BaseModel):
 
     def __str__(self):
         return f"{LodgementType.choices[self.lodgement_type - 1][1]} - {PersonalType.choices[self.personel_type - 1][1]} - {LodgementSize.choices[self.lodgement_size - 1][1]}"
+
+    def get_priority_queue(self, new_application=None, new_application_points=None):
+        applications = list(self.applications.filter(status=ApplicationStatus.APPROVED))
+        # Sort applications in Python based on the scoring_form property
+        applications.sort(key=lambda x: x.scoring_form.total_points, reverse=True)
+
+        if new_application is not None and new_application_points is not None:
+            points_list = [app.scoring_form.total_points for app in applications]
+            # Find the position where the new application should be inserted
+            position = bisect.bisect_right(
+                [-points for points in points_list], -new_application_points
+            )
+            # Insert the new application at the correct position
+            applications.insert(position, new_application)
+
+        lodgements = self.lodgements.order_by("busy_until")
+        available_lodgements = lodgements.filter(busy_until__isnull=True)
+        busy_lodgements = lodgements.filter(busy_until__isnull=False)
+
+        today = timezone.now().date()
+        availability_queue = []
+
+        # Assign immediate availability to applications if there are available lodgements
+        for application in applications:
+            if available_lodgements:
+                lodgement = available_lodgements[0]
+                availability_queue.append(
+                    {
+                        "application": application,
+                        "total_points": application.scoring_form.total_points
+                        if application.id != -1
+                        else new_application_points,
+                        "estimated_availability_date": today,
+                        "lodgement": lodgement,
+                    }
+                )
+                available_lodgements = available_lodgements[
+                    1:
+                ]  # Move to the next available lodgement
+            else:
+                # If no available lodgements, assign based on the earliest busy_until
+                if busy_lodgements:
+                    earliest_busy = busy_lodgements[0]
+                    availability_queue.append(
+                        {
+                            "application": application,
+                            "total_points": application.scoring_form.total_points
+                            if application.id != -1
+                            else new_application_points,
+                            "estimated_availability_date": earliest_busy.busy_until,
+                            "lodgement": earliest_busy,
+                        }
+                    )
+                    busy_lodgements = busy_lodgements[
+                        1:
+                    ]  # Move to the next busy lodgement
+                else:
+                    availability_queue.append(
+                        {
+                            "application": application,
+                            "total_points": application.scoring_form.total_points
+                            if application.id != -1
+                            else new_application_points,
+                            "estimated_availability_date": None,
+                            "lodgement": None,
+                        }
+                    )
+
+        return availability_queue
+
+    def make_assignments(self):
+        applications = list(self.applications.filter(status=ApplicationStatus.APPROVED))
+        applications.sort(key=lambda x: x.scoring_form.total_points, reverse=True)
+
+        today = timezone.now().date()
+        thirty_days_later = today + timezone.timedelta(days=30)
+        lodgements = list(
+            self.lodgements.filter(
+                Q(busy_until__isnull=True) | Q(busy_until__lte=thirty_days_later)
+            ).order_by("busy_until")
+        )
+
+        while applications and lodgements:
+            application = applications.pop(0)
+            lodgement = lodgements.pop(0)
+            assignment = Assignment(
+                application=application,
+                lodgement=lodgement,
+                start_date=thirty_days_later,
+                end_date=thirty_days_later + timezone.timedelta(days=365 * 5),
+                status=AssignmentStatus.LOCKED,
+            )
+            assignment.save()
+            lodgement.busy_until = assignment.end_date
+            lodgement.save()
+            application.status = ApplicationStatus.ASSIGNED
+            application.save()
 
 
 class Assignment(BaseModel):

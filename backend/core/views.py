@@ -17,6 +17,7 @@ from .constants import (
     FormType,
     SIRA_TAHSIS_4_NOLU_CETVEL_FORM,
     FormItemTypes,
+    days_until,
 )
 from .models import (
     Lodgement,
@@ -209,34 +210,32 @@ class QueueViewSet(viewsets.ModelViewSet):
         ScoringFormLog.objects.create(user=user, data=form_data)
 
         applications = queue.applications.filter(
-            status__in=[ApplicationStatus.PENDING],
+            status__in=[ApplicationStatus.APPROVED],
         )
 
         current_rank = 1
         for application in applications:
             if application.user == user:
                 continue
-            if application.total_points > total_points:
+            if application.scoring_form.total_points > total_points:
                 current_rank += 1
 
         if queue.lodgements.count() == 0:
-            approximate_availability = "No lodgements found."
-        elif queue.lodgements.filter(busy_until=None).exists():
-            approximate_availability = "Available"
+            approximate_availability = None
         else:
-            min_busy_until = queue.lodgements.aggregate(Min("busy_until"))[
-                "busy_until__min"
-            ].date()
-
-            approximate_availability = min_busy_until.astimezone(
-                tz=pytz.timezone("Asia/Istanbul")
-            ).strftime("%d %B %Y, %H:%M")
+            new_application = Application(user=user, queue=queue, id=-1)
+            pq = queue.get_priority_queue(
+                new_application=new_application, new_application_points=total_points
+            )
+            approximate_availability = list(
+                filter(lambda x: x.get("application").id == -1, pq)
+            )[0].get("estimated_availability_date")
 
         return Response(
             {
                 "total_points": total_points,
                 "rank": current_rank,
-                "approximate_availability": approximate_availability,
+                "approximate_availability": days_until(approximate_availability),
             }
         )
 

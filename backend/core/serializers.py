@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 from authentication.serializers import UserSerializer
 from constants import PersonalType
-from core.constants import LodgementType, LodgementSize, ApplicationStatus
+from core.constants import LodgementType, LodgementSize, ApplicationStatus, days_until
 from .models import (
     Lodgement,
     Application,
@@ -160,28 +160,33 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_estimated_availability(self, obj):
         if obj.queue.lodgements.count() == 0:
-            return "No lodgements found."
-
-        if obj.queue.lodgements.filter(busy_until=None).exists():
-            return "Available"
-
-        min_busy_until = obj.queue.lodgements.aggregate(Min("busy_until"))[
-            "busy_until__min"
-        ].date()
-
-        return min_busy_until.astimezone(tz=pytz.timezone("Asia/Istanbul")).strftime(
-            "%d %B %Y, %H:%M"
-        )
+            approximate_availability = None
+        else:
+            if obj.status == ApplicationStatus.APPROVED:
+                pq = obj.queue.get_priority_queue()
+                approximate_availability = list(
+                    filter(lambda x: x.get("application").id == obj.id, pq)
+                )[0].get("estimated_availability_date")
+            else:
+                new_application = Application(user=obj.user, queue=obj.queue, id=-1)
+                pq = obj.queue.get_priority_queue(
+                    new_application=new_application,
+                    new_application_points=obj.scoring_form.total_points,
+                )
+                approximate_availability = list(
+                    filter(lambda x: x.get("application").id == -1, pq)
+                )[0].get("estimated_availability_date")
+        return days_until(approximate_availability)
 
     def get_rank(self, obj):
         applications = obj.queue.applications.filter(
-            status__in=[ApplicationStatus.PENDING],
+            status__in=[ApplicationStatus.APPROVED],
         )
         current_rank = 1
         for application in applications:
             if application.user == obj.user:
                 continue
-            if application.total_points > obj.scoring_form.total_points:
+            if application.scoring_form.total_points > obj.scoring_form.total_points:
                 current_rank += 1
         return current_rank
 
