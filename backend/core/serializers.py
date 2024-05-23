@@ -127,6 +127,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField()
     estimated_availability = serializers.SerializerMethodField()
     rank = serializers.SerializerMethodField()
+    is_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -141,6 +142,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "created_at",
             "estimated_availability",
             "rank",
+            "is_locked",
         ]
 
     def get_status(self, obj):
@@ -189,6 +191,15 @@ class ApplicationSerializer(serializers.ModelSerializer):
             if application.scoring_form.total_points > obj.scoring_form.total_points:
                 current_rank += 1
         return current_rank
+
+    def get_is_locked(self, obj):
+        return obj.status in [
+            ApplicationStatus.APPROVED,
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.CANCELLED,
+            ApplicationStatus.PENDING,
+            ApplicationStatus.ASSIGNED,
+        ]
 
 
 class ScoringFormItemSerializer(serializers.ModelSerializer):

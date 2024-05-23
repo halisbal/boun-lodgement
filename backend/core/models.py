@@ -3,9 +3,10 @@ from functools import cached_property
 
 from django.db import models
 from dateutil.relativedelta import relativedelta
-from django.db.models import Q
+from django.db.models import Q, Case, When, BooleanField, Value, OuterRef, Subquery
 from django.utils import timezone
 import bisect
+import numpy as np
 
 from authentication.models import User
 from constants import (
@@ -156,7 +157,7 @@ class Queue(BaseModel):
         available_lodgements = lodgements.filter(busy_until__isnull=True)
         busy_lodgements = lodgements.filter(busy_until__isnull=False)
 
-        today = timezone.now().date()
+        today = timezone.now()
         availability_queue = []
 
         # Assign immediate availability to applications if there are available lodgements
@@ -207,7 +208,35 @@ class Queue(BaseModel):
 
         return availability_queue
 
-    def make_assignments(self):
+    def assign(self, application, lodgement):
+        today = timezone.now().date()
+        thirty_days_later = today + timezone.timedelta(days=30)
+        assignment = Assignment(
+            application=application,
+            lodgement=lodgement,
+            start_date=thirty_days_later,
+            end_date=thirty_days_later + timezone.timedelta(days=365 * 5),
+            status=AssignmentStatus.LOCKED,
+        )
+        assignment.save()
+        lodgement.busy_until = assignment.end_date
+        lodgement.save()
+        application.status = ApplicationStatus.ASSIGNED
+        application.save()
+
+    def assignment_pipeline(self):
+        if self.lodgement_type == LodgementType.SERVICE_ALLOCATION:
+            # Service allocation will be handled manually by manager
+            pass
+        elif self.lodgement_type == LodgementType.DUTY_ALLOCATION:
+            self.make_assignments_default()
+        elif self.lodgement_type == LodgementType.SEQUENTIAL_ALLOCATION:
+            if self.personel_type == PersonalType.ACADEMIC:
+                self.make_assignments_academic()
+            elif self.personel_type == PersonalType.ADMINISTRATIVE:
+                self.make_assignments_default()
+
+    def make_assignments_default(self):
         applications = list(self.applications.filter(status=ApplicationStatus.APPROVED))
         applications.sort(key=lambda x: x.scoring_form.total_points, reverse=True)
 
@@ -222,18 +251,141 @@ class Queue(BaseModel):
         while applications and lodgements:
             application = applications.pop(0)
             lodgement = lodgements.pop(0)
-            assignment = Assignment(
-                application=application,
-                lodgement=lodgement,
-                start_date=thirty_days_later,
-                end_date=thirty_days_later + timezone.timedelta(days=365 * 5),
-                status=AssignmentStatus.LOCKED,
+            self.assign(application, lodgement)
+
+    def make_assignments_academic(self):
+        today = timezone.now().date()
+        thirty_days_later = today + timezone.timedelta(days=30)
+        threshold_date = datetime.now() - relativedelta(years=3)
+        all_lodgements = list(self.lodgements.all())
+
+        active_assignment_subquery = Assignment.objects.filter(
+            lodgement=OuterRef("pk"), status=AssignmentStatus.ACTIVE
+        ).values("application__user__start_of_employment")[:1]
+
+        # Annotate lodgements with is_new field
+        assigned_lodgements = self.lodgements.annotate(
+            start_of_employment=Subquery(active_assignment_subquery),
+            is_new=Case(
+                When(start_of_employment__gte=threshold_date, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+        ).filter(busy_until__gte=thirty_days_later)
+
+        for i in assigned_lodgements:
+            print(i)
+            print(i.is_new)
+
+        new_academic_lodgements = [
+            lodgement for lodgement in assigned_lodgements if lodgement.is_new
+        ]
+        old_academic_lodgements = [
+            lodgement for lodgement in assigned_lodgements if not lodgement.is_new
+        ]
+
+        assignable_lodgements = list(
+            self.lodgements.filter(
+                Q(busy_until__isnull=True) | Q(busy_until__lte=thirty_days_later)
+            ).order_by("busy_until")
+        )
+
+        new_academic_applications = list(
+            self.applications.filter(
+                Q(
+                    user__start_of_employment__gte=datetime.now()
+                    - relativedelta(years=3)
+                )
+                & Q(status=ApplicationStatus.APPROVED)
             )
-            assignment.save()
-            lodgement.busy_until = assignment.end_date
-            lodgement.save()
-            application.status = ApplicationStatus.ASSIGNED
-            application.save()
+        )
+        new_academic_applications.sort(
+            key=lambda x: x.scoring_form.total_points, reverse=True
+        )
+
+        old_academic_applications = list(
+            self.applications.filter(
+                Q(user__start_of_employment__lt=datetime.now() - relativedelta(years=3))
+                & Q(status=ApplicationStatus.APPROVED)
+            )
+        )
+        old_academic_applications.sort(
+            key=lambda x: x.scoring_form.total_points, reverse=True
+        )
+
+        desired_vector = np.array(
+            [0.8 * len(all_lodgements), 0.2 * len(all_lodgements)]
+        )
+        while assignable_lodgements and (
+            new_academic_applications or old_academic_applications
+        ):
+            lodgement = assignable_lodgements.pop(0)
+
+            new_academic_assignment_vector = np.array(
+                [len(new_academic_lodgements) + 1, len(old_academic_lodgements)]
+            )
+
+            old_academic_assignment_vector = np.array(
+                [len(new_academic_lodgements), len(old_academic_lodgements) + 1]
+            )
+
+            if np.linalg.norm(
+                new_academic_assignment_vector - desired_vector
+            ) < np.linalg.norm(old_academic_assignment_vector - desired_vector):
+                if new_academic_applications:
+                    application = new_academic_applications.pop(0)
+                    self.assign(application, lodgement)
+                else:
+                    application = old_academic_applications.pop(0)
+                    self.assign(application, lodgement)
+
+            assigned_lodgements = self.lodgements.annotate(
+                is_new=Case(
+                    When(
+                        user__start_of_employment__gte=threshold_date, then=Value(True)
+                    ),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                )
+            ).filter(busy_until__gte=thirty_days_later)
+            new_academic_lodgements = [
+                lodgement for lodgement in assigned_lodgements if lodgement.is_new
+            ]
+            old_academic_lodgements = [
+                lodgement for lodgement in assigned_lodgements if not lodgement.is_new
+            ]
+
+            assignable_lodgements = list(
+                self.lodgements.filter(
+                    Q(busy_until__isnull=True) | Q(busy_until__lte=thirty_days_later)
+                ).order_by("busy_until")
+            )
+
+            new_academic_applications = list(
+                self.applications.filter(
+                    Q(
+                        user__start_of_employment__gte=datetime.now()
+                        - relativedelta(years=3)
+                    )
+                    & Q(status=ApplicationStatus.APPROVED)
+                )
+            )
+            new_academic_applications.sort(
+                key=lambda x: x.scoring_form.total_points, reverse=True
+            )
+
+            old_academic_applications = list(
+                self.applications.filter(
+                    Q(
+                        user__start_of_employment__lt=datetime.now()
+                        - relativedelta(years=3)
+                    )
+                    & Q(status=ApplicationStatus.APPROVED)
+                )
+            )
+            old_academic_applications.sort(
+                key=lambda x: x.scoring_form.total_points, reverse=True
+            )
 
 
 class Assignment(BaseModel):

@@ -215,8 +215,6 @@ class QueueViewSet(viewsets.ModelViewSet):
 
         current_rank = 1
         for application in applications:
-            if application.user == user:
-                continue
             if application.scoring_form.total_points > total_points:
                 current_rank += 1
 
@@ -269,25 +267,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
 
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["POST"])
-    def cancel(self, request, pk=None):
-        application = self.get_object()
-
-        if application.status in [
-            ApplicationStatus.APPROVED,
-            ApplicationStatus.REJECTED,
-        ]:
-            return Response(
-                {"error": "Cannot cancel an application that is already finalized."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        application.status = ApplicationStatus.CANCELLED
-        application.save()
-
-        serializer = self.get_serializer(application)
         return Response(serializer.data)
 
     @action(detail=True, methods=["POST"], url_path="submit-scoring-form")
@@ -469,5 +448,56 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
 
         application = self.get_object()
+        serializer = self.get_serializer(application)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["POST"])
+    def cancel(self, request, pk=None):
+        application = self.get_object()
+
+        if application.status in [
+            ApplicationStatus.APPROVED,
+            ApplicationStatus.REJECTED,
+        ]:
+            return Response(
+                {"error": "Cannot cancel an application that is already finalized."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        application.status = ApplicationStatus.CANCELLED
+        application.save()
+
+        serializer = self.get_serializer(application)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["POST"])
+    def send_to_approve(self, request, pk=None):
+        application = self.get_object()
+
+        if application.status != ApplicationStatus.IN_PROGRESS:
+            return Response(
+                {"error": "Cannot send an application that is not in progress."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        application.status = ApplicationStatus.PENDING
+        application.save()
+
+        serializer = self.get_serializer(application)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["POST"])
+    def cancel_approval(self, request, pk=None):
+        application = self.get_object()
+
+        if application.status != ApplicationStatus.PENDING:
+            return Response(
+                {"error": "Cannot cancel an application that is not pending."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        application.status = ApplicationStatus.IN_PROGRESS
+        application.save()
+
         serializer = self.get_serializer(application)
         return Response(serializer.data)
