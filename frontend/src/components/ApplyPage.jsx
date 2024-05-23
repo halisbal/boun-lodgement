@@ -1,4 +1,4 @@
-import { Select, Option, Button, Accordion, AccordionBody, AccordionHeader } from "@material-tailwind/react";
+import { Select, Option, Button, Accordion, AccordionBody, AccordionHeader, Tooltip } from "@material-tailwind/react";
 import DefaultTable from "./DefaultTable";
 import fetchQueues from "../fetchs/fetchQueues";
 import { useQuery } from "@tanstack/react-query";
@@ -104,8 +104,18 @@ const ApplyPage = () => {
                                 {scoreFormQuery.data?.map((item) => (
                                     <ListItem key={item.id} className="w-full">
                                         <div className="flex justify-between w-full items-center">
-                                            <div>
-                                                <label className="">{item.label}</label>
+                                            <div className="flex flex-row items-center">
+
+                                                <Tooltip
+                                                    content={
+                                                        <div className="w-80">
+                                                            {item.caption}
+                                                        </div>
+                                                    }
+                                                    placement="top">
+
+                                                    <label className=" ">{item.label}</label>
+                                                </Tooltip>
                                             </div>
                                             <div>
                                                 {item.field_type === "Integer" ? (

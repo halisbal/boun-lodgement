@@ -1,4 +1,4 @@
-import { List, ListItem, Input, Checkbox, Button, Card, Select, Option } from "@material-tailwind/react";
+import { List, ListItem, Input, Checkbox, Button, Card, Select, Option, Tooltip, IconButton } from "@material-tailwind/react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -16,6 +16,8 @@ const ApplicationDetailPage = () => {
     const [selectedDocument, setSelectedDocument] = useState();
     const [file, setFile] = useState();
     const [uploadedDocs, setUploadedDocs] = useState([]);
+    const [visibleDescription, setVisibleDescription] = useState(null);
+    const [isLocked, setIsLocked] = useState(false);
 
     // Initialize form values when data is loaded
     useEffect(() => {
@@ -35,6 +37,7 @@ const ApplicationDetailPage = () => {
 
         console.log(arr);
         setUploadedDocs(arr)
+        setIsLocked(data?.is_locked);
 
     }, [data]);
 
@@ -101,6 +104,10 @@ const ApplicationDetailPage = () => {
         setUploadedDocs(prev => [...prev, { name: file.name, is_approved: false, link: presigned_url?.fields.key }]);
     }
 
+    const toggleDescription = (index) => {
+        setVisibleDescription(visibleDescription === index ? null : index);
+    };
+
     return (
         <div className="bg-gray-100 p-14">
             <div className="w-8/12 mx-auto ">
@@ -144,6 +151,27 @@ const ApplicationDetailPage = () => {
                             <label className="text-center block">{data?.total_points}</label>
                         </div>
                     </ListItem>
+                    <div>
+                        <Button color="red"
+                            disabled={data?.status === 'In Progress' || data?.status === 'Pending' || data?.status === 'Re Upload' ? false : true}
+                            onClick={() => {apiService.post(`/application/${id}/cancel/`); window.location.reload();}}
+                            className="w-1/4 ml-2 my-1">
+                            Cancel
+                        </Button>
+                        <Button color="green"
+                            disabled={data?.status === 'In Progress' || data?.status === 'Re Upload' ? false : true}
+                            onClick={() => {apiService.post(`/application/${id}/send_to_approve/`); window.location.reload();}}
+                            className="w-1/4 ml-2 my-1">
+                            Send To Approval
+                        </Button>
+                        <Button color="red"
+                            disabled={data?.status === 'Pending' ? false : true}
+                            onClick={() => {apiService.post(`/application/${id}/cancel_approval/`); window.location.reload();}}
+                            className="w-1/4 ml-2 my-1">
+                            Cancel Send Approval
+                        </Button>
+                    </div>
+
 
                 </List>
 
@@ -160,30 +188,57 @@ const ApplicationDetailPage = () => {
                         {data.scoring_form.items.map((item) => (
                             <ListItem key={item.id} className="w-full">
                                 <div className="flex justify-between w-full items-center">
-                                    <div>
+                                    <div className="flex flex-row">
                                         <label className="">{item.label}</label>
+                                        <Tooltip
+
+                                            content={
+                                                <div className="w-80">
+                                                    {item.caption}
+                                                </div>
+                                            }
+                                            placement="top">
+
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth={2}
+                                                className="h-5 w-5 cursor-pointer text-blue-gray-500 ml-2"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                                                />
+                                            </svg>
+                                        </Tooltip>
                                     </div>
                                     <div>
-                                        {item.field_type === "Integer" ? (
-                                            <Input
-                                                type="number"
-                                                value={formValues[item.id] || ''}
-                                                onChange={(e) => handleChange(item.id, e, item.field_type)}
-                                                className="input input-bordered"
-                                            />
-                                        ) : (
-                                            <Checkbox
-                                                checked={!!formValues[item.id]}
-                                                onChange={(e) => handleChange(item.id, e, item.field_type)}
-                                                color="blue"
-                                            />
-                                        )}
+                                        <div>
+                                            {item.field_type === "Integer" ? (
+                                                <Input
+                                                    type="number"
+                                                    value={formValues[item.id] || ''}
+                                                    onChange={(e) => handleChange(item.id, e, item.field_type)}
+                                                    className="input input-bordered"
+                                                />
+                                            ) : (
+                                                <Checkbox
+                                                    checked={!!formValues[item.id]}
+                                                    onChange={(e) => handleChange(item.id, e, item.field_type)}
+                                                    color="blue"
+                                                />
+                                            )}
+                                        </div>
                                     </div>
+
                                 </div>
                             </ListItem>
                         ))}
                     </List>
-                    <Button onClick={handleSubmit} className="w-6/12 mx-auto py-4 mt-4 mb-6">Submit</Button>
+                    <Button disabled={isLocked} onClick={handleSubmit} className="w-6/12 mx-auto py-4 mt-4 mb-6">Submit</Button>
                 </Card>
 
 
@@ -196,7 +251,7 @@ const ApplicationDetailPage = () => {
                         <label>Yükleyeceğiniz dosyayı seçiniz</label>
                     </div>
                     <div className="w-1/2">
-                        <Select label="Select Version" id="documentSelect" value={selectedDocument} onChange={(val) => setSelectedDocument(val)}>
+                        <Select disabled={isLocked} label="Select Version" id="documentSelect" value={selectedDocument} onChange={(val) => setSelectedDocument(val)}>
                             {data?.queue?.required_documents?.map((document) => (
                                 <Option key={document.id} value={document.id}>
                                     {document.name}
@@ -217,7 +272,7 @@ const ApplicationDetailPage = () => {
                             <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
                         </div>
-                        <input id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
+                        <input disabled={isLocked} id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
                     </label>
                 </div>
                 <div className="w-8/12">
@@ -240,7 +295,7 @@ const ApplicationDetailPage = () => {
 
 
                 </div>
-                <Button disabled={selectedDocument === undefined ? true : false} className="w-1/3 p-4 my-6" color="green" onClick={handleUploadDocumentClick}>Upload</Button>
+                <Button disabled={selectedDocument === undefined || isLocked ? true : false} className="w-1/3 p-4 my-6" color="green" onClick={handleUploadDocumentClick}>Upload</Button>
 
 
             </div>
