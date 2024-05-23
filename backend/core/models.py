@@ -260,7 +260,8 @@ class Queue(BaseModel):
         all_lodgements = list(self.lodgements.all())
 
         active_assignment_subquery = Assignment.objects.filter(
-            lodgement=OuterRef("pk"), status=AssignmentStatus.ACTIVE
+            lodgement=OuterRef("pk"),
+            status__in=[AssignmentStatus.ACTIVE, AssignmentStatus.LOCKED],
         ).values("application__user__start_of_employment")[:1]
 
         # Annotate lodgements with is_new field
@@ -273,22 +274,21 @@ class Queue(BaseModel):
             ),
         ).filter(busy_until__gte=thirty_days_later)
 
-        for i in assigned_lodgements:
-            print(i)
-            print(i.is_new)
-
         new_academic_lodgements = [
             lodgement for lodgement in assigned_lodgements if lodgement.is_new
         ]
+        print("New academic lodgements", new_academic_lodgements)
         old_academic_lodgements = [
             lodgement for lodgement in assigned_lodgements if not lodgement.is_new
         ]
+        print("Old academic lodgements", old_academic_lodgements)
 
         assignable_lodgements = list(
             self.lodgements.filter(
                 Q(busy_until__isnull=True) | Q(busy_until__lte=thirty_days_later)
             ).order_by("busy_until")
         )
+        print("Assignable lodgements", assignable_lodgements)
 
         new_academic_applications = list(
             self.applications.filter(
@@ -302,6 +302,7 @@ class Queue(BaseModel):
         new_academic_applications.sort(
             key=lambda x: x.scoring_form.total_points, reverse=True
         )
+        print("New academic applications", new_academic_applications)
 
         old_academic_applications = list(
             self.applications.filter(
@@ -312,6 +313,7 @@ class Queue(BaseModel):
         old_academic_applications.sort(
             key=lambda x: x.scoring_form.total_points, reverse=True
         )
+        print("Old academic applications", old_academic_applications)
 
         desired_vector = np.array(
             [0.8 * len(all_lodgements), 0.2 * len(all_lodgements)]
@@ -329,37 +331,70 @@ class Queue(BaseModel):
                 [len(new_academic_lodgements), len(old_academic_lodgements) + 1]
             )
 
+            print(
+                "Vector difference to desired vector if new academic is selected",
+                np.linalg.norm(new_academic_assignment_vector - desired_vector),
+            )
+            print(
+                "Vector difference to desired vector if old academic is selected",
+                np.linalg.norm(old_academic_assignment_vector - desired_vector),
+            )
+
             if np.linalg.norm(
                 new_academic_assignment_vector - desired_vector
             ) < np.linalg.norm(old_academic_assignment_vector - desired_vector):
                 if new_academic_applications:
+                    print("New academic is selected")
                     application = new_academic_applications.pop(0)
                     self.assign(application, lodgement)
                 else:
+                    print(
+                        "Old academic is selected since there are no new academic applications"
+                    )
                     application = old_academic_applications.pop(0)
                     self.assign(application, lodgement)
+            else:
+                if old_academic_applications:
+                    print("Old academic is selected")
+                    application = old_academic_applications.pop(0)
+                    self.assign(application, lodgement)
+                else:
+                    print(
+                        "New academic is selected since there are no old academic applications"
+                    )
+                    application = new_academic_applications.pop(0)
+                    self.assign(application, lodgement)
 
+            active_assignment_subquery = Assignment.objects.filter(
+                lodgement=OuterRef("pk"),
+                status__in=[AssignmentStatus.ACTIVE, AssignmentStatus.LOCKED],
+            ).values("application__user__start_of_employment")[:1]
+
+            # Annotate lodgements with is_new field
             assigned_lodgements = self.lodgements.annotate(
+                start_of_employment=Subquery(active_assignment_subquery),
                 is_new=Case(
-                    When(
-                        user__start_of_employment__gte=threshold_date, then=Value(True)
-                    ),
+                    When(start_of_employment__gte=threshold_date, then=Value(True)),
                     default=Value(False),
                     output_field=BooleanField(),
-                )
+                ),
             ).filter(busy_until__gte=thirty_days_later)
+
             new_academic_lodgements = [
                 lodgement for lodgement in assigned_lodgements if lodgement.is_new
             ]
+            print("New academic lodgements", new_academic_lodgements)
             old_academic_lodgements = [
                 lodgement for lodgement in assigned_lodgements if not lodgement.is_new
             ]
+            print("Old academic lodgements", old_academic_lodgements)
 
             assignable_lodgements = list(
                 self.lodgements.filter(
                     Q(busy_until__isnull=True) | Q(busy_until__lte=thirty_days_later)
                 ).order_by("busy_until")
             )
+            print("Assignable lodgements", assignable_lodgements)
 
             new_academic_applications = list(
                 self.applications.filter(
@@ -373,6 +408,7 @@ class Queue(BaseModel):
             new_academic_applications.sort(
                 key=lambda x: x.scoring_form.total_points, reverse=True
             )
+            print("New academic applications", new_academic_applications)
 
             old_academic_applications = list(
                 self.applications.filter(
@@ -386,6 +422,7 @@ class Queue(BaseModel):
             old_academic_applications.sort(
                 key=lambda x: x.scoring_form.total_points, reverse=True
             )
+            print("Old academic applications", old_academic_applications)
 
 
 class Assignment(BaseModel):
