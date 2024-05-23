@@ -455,12 +455,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def cancel(self, request, pk=None):
         application = self.get_object()
 
-        if application.status in [
-            ApplicationStatus.APPROVED,
-            ApplicationStatus.REJECTED,
+        if application.status not in [
+            ApplicationStatus.IN_PROGRESS,
+            ApplicationStatus.PENDING,
+            ApplicationStatus.RE_UPLOAD,
         ]:
             return Response(
-                {"error": "Cannot cancel an application that is already finalized."},
+                {"error": "Application status is not suitable for this operation."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -474,9 +475,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def send_to_approve(self, request, pk=None):
         application = self.get_object()
 
-        if application.status != ApplicationStatus.IN_PROGRESS:
+        if application.status not in [
+            ApplicationStatus.IN_PROGRESS,
+            ApplicationStatus.RE_UPLOAD,
+        ]:
             return Response(
-                {"error": "Cannot send an application that is not in progress."},
+                {"error": "Application status is not suitable for this operation."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -492,7 +496,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         if application.status != ApplicationStatus.PENDING:
             return Response(
-                {"error": "Cannot cancel an application that is not pending."},
+                {"error": "Application status is not suitable for this operation."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
