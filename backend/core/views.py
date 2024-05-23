@@ -33,6 +33,7 @@ from .serializers import (
     ApplicationSerializer,
     QueueSerializer,
     ScoringFormItemSerializer,
+    ApplicationListSerializer,
 )
 
 
@@ -253,7 +254,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": "Application not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = ApplicationListSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):

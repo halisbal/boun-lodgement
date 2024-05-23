@@ -202,6 +202,22 @@ class ApplicationSerializer(serializers.ModelSerializer):
         ]
 
 
+class ApplicationListSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    queue = QueueSerializer(read_only=True)
+
+    class Meta:
+        model = Application
+        fields = [
+            "id",
+            "status",
+            "queue",
+        ]
+
+    def get_status(self, obj):
+        return obj.get_status_display()
+
+
 class ScoringFormItemSerializer(serializers.ModelSerializer):
     field_type = serializers.SerializerMethodField()
 
