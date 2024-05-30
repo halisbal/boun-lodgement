@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from constants import UserRoles
 from src.settings import AWS_STORAGE_BUCKET_NAME
 from .constants import (
     ApplicationStatus,
@@ -36,13 +37,6 @@ from .serializers import (
     ScoringFormItemSerializer,
     ApplicationListSerializer,
 )
-
-
-class LodgementListView(APIView):
-    def get(self, request):
-        lodgements = Lodgement.objects.all()
-        serializer = LodgementSerializer(lodgements, many=True)
-        return Response(serializer.data)
 
 
 class LodgementViewSet(viewsets.ModelViewSet):
@@ -127,6 +121,8 @@ class QueueViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if user.role in [UserRoles.MANAGER, UserRoles.ADMIN]:
+            return Queue.objects.all()
         return Queue.objects.filter(personel_type=user.type)
 
     def list(self, request, *args, **kwargs):
