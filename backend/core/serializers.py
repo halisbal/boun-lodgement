@@ -59,6 +59,30 @@ class QueueSerializer(serializers.ModelSerializer):
         return representation
 
 
+class QueueReadOnlySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Queue
+        fields = [
+            "id",
+            "lodgement_type",
+            "personel_type",
+            "lodgement_size",
+        ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["lodgement_type"] = LodgementType.choices[
+            instance.lodgement_type - 1
+        ][1]
+        representation["personel_type"] = PersonalType.choices[
+            instance.personel_type - 1
+        ][1]
+        representation["lodgement_size"] = LodgementSize.choices[
+            instance.lodgement_size - 1
+        ][1]
+        return representation
+
+
 class LodgementSerializer(serializers.ModelSerializer):
     queue = QueueSerializer(read_only=True)
     tags = serializers.SerializerMethodField()
@@ -204,7 +228,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
 class ApplicationListSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
-    queue = QueueSerializer(read_only=True)
+    queue = QueueReadOnlySerializer(read_only=True)
 
     class Meta:
         model = Application
