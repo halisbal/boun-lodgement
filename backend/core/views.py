@@ -5,7 +5,7 @@ from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -28,6 +28,7 @@ from .models import (
     ScoringFormItem,
     ScoringFormLog,
 )
+from .permissions import IsAuthenticatedManager
 from .serializers import (
     LodgementSerializer,
     ApplicationSerializer,
@@ -41,6 +42,52 @@ class LodgementListView(APIView):
     def get(self, request):
         lodgements = Lodgement.objects.all()
         serializer = LodgementSerializer(lodgements, many=True)
+        return Response(serializer.data)
+
+
+class LodgementViewSet(viewsets.ModelViewSet):
+    queryset = Lodgement.objects.all()
+    serializer_class = LodgementSerializer
+    permission_classes = [IsAuthenticated]
+
+    permission_classes_by_action = {
+        "default": [IsAuthenticated],
+        "update": [IsAuthenticatedManager],
+        "create": [IsAuthenticatedManager],
+    }
+
+    def get_permissions(self):
+        try:
+            # return permission_classes depending on `action`
+            return [
+                permission()
+                for permission in self.permission_classes_by_action[self.action]
+            ]
+        except KeyError:
+            # action is not set return default permission_classes
+            return [
+                permission()
+                for permission in self.permission_classes_by_action["default"]
+            ]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        lodgement = self.get_object()
+        data = request.data
+        serializer = self.get_serializer(lodgement, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data)
 
 

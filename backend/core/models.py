@@ -38,9 +38,6 @@ class Lodgement(BaseModel):
     location = models.CharField(max_length=255)
     is_available = models.BooleanField(default=True)
     busy_until = models.DateTimeField(null=True, blank=True)
-    required_documents = models.ManyToManyField(
-        "Document", related_name="lodgements", blank=True
-    )
     queue = models.ForeignKey(
         "Queue", on_delete=models.CASCADE, related_name="lodgements"
     )

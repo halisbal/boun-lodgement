@@ -6,6 +6,7 @@ from .views import (
     QueueViewSet,
     ApplicationViewSet,
     ScoringFormViewSet,
+    LodgementViewSet,
 )
 
 app_name = "core"
@@ -14,8 +15,8 @@ router = DefaultRouter()
 router.register(r"application", ApplicationViewSet)
 router.register(r"queue", QueueViewSet)
 router.register(r"scoring_form", ScoringFormViewSet)
+router.register(r"lodgement", LodgementViewSet)
 
 urlpatterns = [
-    path("lodgement/list/", LodgementListView.as_view(), name="lodgement_list"),
     path("", include(router.urls)),
 ]

@@ -85,6 +85,9 @@ class QueueReadOnlySerializer(serializers.ModelSerializer):
 
 class LodgementSerializer(serializers.ModelSerializer):
     queue = QueueSerializer(read_only=True)
+    queue_id = serializers.PrimaryKeyRelatedField(
+        queryset=Queue.objects.all(), source="queue"
+    )
     tags = serializers.SerializerMethodField()
 
     class Meta:
@@ -98,8 +101,8 @@ class LodgementSerializer(serializers.ModelSerializer):
             "location",
             "is_available",
             "busy_until",
-            "required_documents",
             "queue",
+            "queue_id",
             "tags",
         ]
 
@@ -109,13 +112,6 @@ class LodgementSerializer(serializers.ModelSerializer):
             PersonalType.choices[obj.queue.personel_type - 1][1],
             LodgementSize.choices[obj.queue.lodgement_size - 1][1],
         ]
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["required_documents"] = [
-            doc.name for doc in instance.required_documents.all()
-        ]
-        return representation
 
 
 class FormItemSerializer(serializers.ModelSerializer):

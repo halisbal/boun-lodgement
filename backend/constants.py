@@ -9,10 +9,8 @@ ALLOWED_EMAILS = [
 
 class UserRoles(IntegerChoices):
     USER = 1, "User"
-    LODGEMENT_MANAGER = 2, "Lodgement Manager"
-    RESERVATION_MANAGER = 3, "Reservation Manager"
-    MANAGER = 4, "Manager"
-    ADMIN = 5, "Admin"
+    MANAGER = 2, "Manager"
+    ADMIN = 3, "Admin"
 
 
 class PersonalType(IntegerChoices):
