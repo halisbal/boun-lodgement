@@ -57,6 +57,7 @@ class Application(BaseModel):
     queue = models.ForeignKey(
         "Queue", on_delete=models.CASCADE, related_name="applications"
     )
+    system_message = models.TextField(null=True, blank=True)
 
     @property
     def scoring_form(self):

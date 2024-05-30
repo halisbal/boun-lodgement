@@ -547,3 +547,50 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(application)
         return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path="waiting-for-review",
+        permission_classes=[IsAuthenticatedManager],
+    )
+    def applications_waiting_for_review(self, request):
+        applications = Application.objects.filter(status=ApplicationStatus.PENDING)
+        serializer = ApplicationSerializer(applications, many=True)
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
+        methods=["POST"],
+        url_path="review",
+        permission_classes=[IsAuthenticatedManager],
+    )
+    def review(self, request):
+        data = request.data
+        application_id = data.get("application_id")
+        application = Application.objects.get(id=application_id)
+        if application.status != ApplicationStatus.PENDING:
+            return Response(
+                {"error": "Application status is not suitable for this operation."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        review_status = data.get("status")
+        if review_status not in [
+            ApplicationStatus.APPROVED,
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.RE_UPLOAD,
+        ]:
+            return Response(
+                {
+                    "error": f"Invalid status, {review_status}. Valid statuses are: {ApplicationStatus.APPROVED.label}({ApplicationStatus.APPROVED}), {ApplicationStatus.REJECTED.label}({ApplicationStatus.REJECTED}), {ApplicationStatus.RE_UPLOAD.label}({ApplicationStatus.RE_UPLOAD})"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        review_message = data.get("system_message")
+
+        application.status = review_status
+        application.system_message = review_message
+        application.save()
+
+        serializer = ApplicationSerializer(application)
+        return Response(serializer.data)
