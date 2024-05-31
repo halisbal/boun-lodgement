@@ -1,13 +1,16 @@
 import logging
 
 from django.core.exceptions import ValidationError
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 
 from .models import User
-from .serializers import UserSerializer
+from .permissions import IsAuthenticatedAdmin
+from .serializers import UserSerializer, UserUpdateSerializer
 from constants import ALLOWED_EMAILS, UserRoles
 
 
@@ -50,3 +53,23 @@ class MeView(APIView):
     def get(self, request, *args, **kwargs):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticatedAdmin]
+
+    def get_serializer_class(self):
+        if self.action == "edit":
+            return UserUpdateSerializer
+        return UserSerializer
+
+    @action(detail=True, methods=["patch"], url_path="edit", url_name="edit")
+    def edit(self, request, pk=None):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
