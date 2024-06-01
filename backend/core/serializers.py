@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pytz
-from django.db.models import Min
 from rest_framework import serializers
 
 from authentication.serializers import UserSerializer

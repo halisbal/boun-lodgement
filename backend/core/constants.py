@@ -1,12 +1,17 @@
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import IntegerChoices
+from django.db.models import IntegerChoices, TextChoices
 
 
 class LodgementSize(IntegerChoices):
     ONE_PLUS_ONE = 1, "1+1"
     TWO_PLUS_ONE = 2, "2+1"
+
+
+class LodgementSizes(TextChoices):
+    ONE_PLUS_ONE = "1+1"
+    TWO_PLUS_ONE = "2+1"
 
 
 class LodgementType(IntegerChoices):

@@ -19,6 +19,7 @@ from core.constants import (
     ApplicationStatus,
     LodgementType,
     AssignmentStatus,
+    LodgementSizes,
 )
 
 
@@ -32,7 +33,7 @@ class BaseModel(models.Model):
 
 class Lodgement(BaseModel):
     name = models.CharField(max_length=255, null=True, blank=True)
-    size = models.IntegerField(choices=LodgementSize.choices)
+    size = models.TextField(choices=LodgementSizes.choices)
     description = models.TextField()
     image_path = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255)
