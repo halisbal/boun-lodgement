@@ -5,8 +5,7 @@ from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from constants import UserRoles
@@ -28,6 +27,7 @@ from .models import (
     Document,
     ScoringFormItem,
     ScoringFormLog,
+    Announcement,
 )
 from .permissions import IsAuthenticatedManager
 from .serializers import (
@@ -36,6 +36,7 @@ from .serializers import (
     QueueSerializer,
     ScoringFormItemSerializer,
     ApplicationListSerializer,
+    AnnouncementSerializer,
 )
 
 
@@ -593,4 +594,14 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         application.save()
 
         serializer = ApplicationSerializer(application)
+        return Response(serializer.data)
+
+
+class AnnouncementListView(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Announcement.objects.filter(is_visible=True).order_by("-created_at")
+
+    def list(self, request):
+        queryset = self.queryset
+        serializer = AnnouncementSerializer(queryset, many=True)
         return Response(serializer.data)

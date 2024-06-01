@@ -9,6 +9,7 @@ from .models import (
     Queue,
     Assignment,
     ScoringFormItem,
+    Announcement,
 )
 
 
@@ -86,6 +87,12 @@ class AssignmentAdmin(admin.ModelAdmin):
     date_hierarchy = "start_date"
 
 
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "title", "content", "is_visible"]
+    list_filter = ["is_visible"]
+    ordering = ["-created_at"]
+
+
 admin.site.register(Lodgement, LodgementAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(Application, ApplicationAdmin)
@@ -93,3 +100,4 @@ admin.site.register(ApplicationDocument, ApplicationDocumentAdmin)
 admin.site.register(Queue, QueueAdmin)
 admin.site.register(Assignment, AssignmentAdmin)
 admin.site.register(ScoringFormItem, ScoringFormItemAdmin)
+admin.site.register(Announcement, AnnouncementAdmin)

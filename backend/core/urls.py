@@ -6,6 +6,7 @@ from .views import (
     ApplicationViewSet,
     ScoringFormViewSet,
     LodgementViewSet,
+    AnnouncementListView,
 )
 
 app_name = "core"
@@ -15,6 +16,7 @@ router.register(r"application", ApplicationViewSet)
 router.register(r"queue", QueueViewSet)
 router.register(r"scoring_form", ScoringFormViewSet)
 router.register(r"lodgement", LodgementViewSet)
+router.register(r"announcement", AnnouncementListView, basename="announcement")
 
 urlpatterns = [
     path("", include(router.urls)),

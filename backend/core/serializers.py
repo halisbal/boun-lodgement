@@ -15,6 +15,7 @@ from .models import (
     FormItem,
     Document,
     ApplicationDocument,
+    Announcement,
 )
 
 
@@ -247,3 +248,9 @@ class ScoringFormItemSerializer(serializers.ModelSerializer):
 
     def get_field_type(self, obj):
         return obj.get_field_type_display()
+
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Announcement
+        fields = ["id", "created_at", "title", "content"]
