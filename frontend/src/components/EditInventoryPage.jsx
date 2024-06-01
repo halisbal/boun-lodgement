@@ -14,12 +14,13 @@ const emptyLodgement = {
     description: "",
     location: "",
     is_available: "",
-    queue_id: ""
+    queue_id: null
 };
 
 
 const EditInventoryPage = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedLodgementInfo, setSelectedLodgementInfo] = useState(emptyLodgement);
 
     const { data: lodgements, isLoading, error } = useQuery(["lodgementList"], lodgementService.getLodgementList);
@@ -38,7 +39,7 @@ const EditInventoryPage = () => {
     }, [isOpen]);
 
 
-    const mutation = useMutation(
+    const updateLodgementMutation = useMutation(
         (updatedLodgement) => apiService.patch(`/lodgement/${updatedLodgement.id}/`, updatedLodgement),
         {
           onSuccess: () => {
@@ -52,6 +53,19 @@ const EditInventoryPage = () => {
           }
         }
       );
+    const createLodgementMutation = useMutation(
+        (newLodgement) => apiService.post(`/lodgement/`, newLodgement),
+        {
+            onSuccess: () => {
+                queryClient.invalidateQueries("lodgementList");
+                alert("Lodgement created successfully.");
+                setIsOpen(false);
+            },
+            onError: () => {
+                alert("An error occurred. Please try again.");
+            }
+        }
+    );
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -73,17 +87,25 @@ const EditInventoryPage = () => {
 
     const handleSave = () => {
         console.log(selectedLodgementInfo);
-
-        mutation.mutate(selectedLodgementInfo);
-
+        updateLodgementMutation.mutate(selectedLodgementInfo);
     };
 
-    const handleOpen = (key) => {
+    const handleCreate = () => {
+        console.log(selectedLodgementInfo);
+        createLodgementMutation.mutate(selectedLodgementInfo);
+    };
+
+
+    const handleEditOpen = (key) => {
         setIsOpen(true);
         console.log(lodgements)
         setSelectedLodgementInfo(lodgements.find((lodgement) => lodgement.id === key));
 
         console.log(key)
+    }
+    const handleCreateOpen = () => {
+        setIsCreateOpen(true);
+        setSelectedLodgementInfo(emptyLodgement);
     }
     const handleClose = () => setIsOpen(false);
 
@@ -98,6 +120,13 @@ const EditInventoryPage = () => {
 
     return (
         <div className='w-2/3 mx-auto justify-center pt-4'>
+            <div className='flex flex row justify-between py-8 w-full'>
+                <Typography variant="h4" color="blue-gray" className="font-semibold">
+                    <label>Lodgement Inventory</label>
+                </Typography>
+                <Button color='green' variant='outlined' onClick={handleCreateOpen}>Add Lodgement</Button>
+
+            </div>
 
 
             <table className="mt-4 w-full min-w-max table-auto text-left">
@@ -120,6 +149,7 @@ const EditInventoryPage = () => {
                         const classes = isLast
                             ? "p-4"
                             : "p-4 border-b border-blue-gray-50";
+                        
 
                         return (
                             <tr key={lodgement.id}>
@@ -167,7 +197,8 @@ const EditInventoryPage = () => {
                                         color="blue-gray"
                                         className="font-normal"
                                     >
-                                        {lodgement.is_available}
+                                        <label>{lodgement.is_available? "Active": "Inactive"}</label>
+
                                     </Typography>
                                 </td>
 
@@ -183,7 +214,7 @@ const EditInventoryPage = () => {
 
                                 <td className={classes}>
                                     <Tooltip content="Edit User">
-                                        <IconButton variant="text" onClick={() => handleOpen(lodgement.id)}>
+                                        <IconButton variant="text" onClick={() => handleEditOpen(lodgement.id)}>
                                             <PencilIcon className="h-4 w-4" />
                                         </IconButton>
                                     </Tooltip>
@@ -196,39 +227,73 @@ const EditInventoryPage = () => {
             </table>
 
             <div>
-                <Dialog size='xs' open={isOpen} handler={setIsOpen}>
-                    <DialogHeader>burası header</DialogHeader>
+                <Dialog size='sm' open={isOpen} handler={setIsOpen}>
+                    <DialogHeader>Lodgement Info</DialogHeader>
                     <DialogBody >
                         <div className='py-2'>
-                            <Input id='name' value={selectedLodgementInfo.name} onChange={handleChange} />
+                            <Input id='name' label="Name" value={selectedLodgementInfo.name} onChange={handleChange} />
                         </div>
                         <div className='py-2'>
-                            <Input id='size' value={selectedLodgementInfo.size} onChange={handleChange} />
+                            <Input id='size' label='Size' value={selectedLodgementInfo.size} onChange={handleChange} />
                         </div>
                         <div className='py-2'>
-                            <Input id='description' value={selectedLodgementInfo.description} onChange={handleChange} />
+                            <Input id='description' label='Description' value={selectedLodgementInfo.description} onChange={handleChange} />
                         </div>
                         <div className='py-2'>
-                            <Input id='location' value={selectedLodgementInfo.location} onChange={handleChange} />
+                            <Input id='location' label='Location' value={selectedLodgementInfo.location} onChange={handleChange} />
                         </div>
                         <div className='py-2'>
-                            <Input id='is_available' value={selectedLodgementInfo.is_available} onChange={handleChange} />
+                            <Input id='is_available' label='Available' value={selectedLodgementInfo.is_available} onChange={handleChange} />
                         </div>
-                        <div className='py-2'>
-                            <Select value={selectedLodgementInfo.queue_id} onChange={(val) => handleSelectChange(val)}>
+                        <div className='pt-2'>
+                            <Select value={selectedLodgementInfo.queue_id} onChange={(val) => handleSelectChange(val)} label='Queue'>
                                 {queues.map((queue) =>
                                     <Option key={queue.id} value={queue.id}>{queue.personel_type} - {queue.lodgement_type} - {queue.lodgement_size}</Option>
                                 )}
                             </Select>
-
                         </div>
 
 
 
                     </DialogBody>
                     <DialogFooter>
-                        <Button color="red" onClick={handleClose}>Cancel</Button>
-                        <Button color="blue" onClick={handleSave}>Save</Button>
+                        <Button className='mx-1' color="red" onClick={handleClose}>Cancel</Button>
+                        <Button className=''color="blue" onClick={handleSave}>Save</Button>
+                    </DialogFooter>
+                </Dialog>
+
+                <Dialog size='sm' open={isCreateOpen} handler={setIsCreateOpen}>
+                    <DialogHeader>Lodgement Info</DialogHeader>
+                    <DialogBody >
+                        <div className='py-2'>
+                            <Input id='name' label="Name" value={selectedLodgementInfo.name} onChange={handleChange} />
+                        </div>
+                        <div className='py-2'>
+                            <Input id='size' label='Size' value={selectedLodgementInfo.size} onChange={handleChange} />
+                        </div>
+                        <div className='py-2'>
+                            <Input id='description' label='Description' value={selectedLodgementInfo.description} onChange={handleChange} />
+                        </div>
+                        <div className='py-2'>
+                            <Input id='location' label='Location' value={selectedLodgementInfo.location} onChange={handleChange} />
+                        </div>
+                        <div className='py-2'>
+                            <Input id='is_available' label='Available' value={selectedLodgementInfo.is_available} onChange={handleChange} />
+                        </div>
+                        <div className='pt-2'>
+                            <Select value={selectedLodgementInfo.queue_id} onChange={(val) => handleSelectChange(val)} label='Queue'>
+                                {queues.map((queue) =>
+                                    <Option key={queue.id} value={queue.id}>{queue.personel_type} - {queue.lodgement_type} - {queue.lodgement_size}</Option>
+                                )}
+                            </Select>
+                        </div>
+
+
+
+                    </DialogBody>
+                    <DialogFooter>
+                        <Button className='mx-1' color="red" onClick={()=> setIsCreateOpen(false)}>Cancel</Button>
+                        <Button className=''color="blue" onClick={handleCreate}>Create</Button>
                     </DialogFooter>
                 </Dialog>
             </div>
