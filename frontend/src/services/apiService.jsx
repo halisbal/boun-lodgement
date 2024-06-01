@@ -43,5 +43,6 @@ export const apiService = {
   get: (endpoint) => fetchAPI(endpoint),
   post: (endpoint, data) => fetchAPI(endpoint, { method: 'POST', body: JSON.stringify(data) }),
   postMultiPartData: (endpoint, data) => fetchMultiPartAPI(endpoint, { method: 'PUT', body: data }),
+  patch: (endpoint, data) => fetchAPI(endpoint, { method: 'PATCH', body: JSON.stringify(data) }),
   // add other methods like delete, put, patch as needed
 };

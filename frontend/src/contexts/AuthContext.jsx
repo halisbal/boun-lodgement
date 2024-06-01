@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       authService.getUserInfo().then((response) => {
         if (response) {
           setUser(response);
-          console.log(response);
+          console.log("use effect response context",response);
           setIsLoggedIn(true);
         }
       });

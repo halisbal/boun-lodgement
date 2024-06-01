@@ -10,9 +10,10 @@ import LoggedInHeader from "./components/LoggedInHeader";
 import ListLodgementsPage from "./components/ListLodgementsPage";
 import AuthButtons from "./components/AuthButtons";
 import ApplyPage from "./components/ApplyPage";
-import { List } from "@material-tailwind/react";
 import ListApplicationsPage from "./components/ListApplicationsPage";
 import ApplicationDetailPage from "./components/ApplicationDetailPage";
+import EditInventoryPage from "./components/EditInventoryPage";
+import ManagerHeader from "./components/ManagerHeader";
 const queryClient = new QueryClient({
   defaultOptions: {
     staleTime: Infinity,
@@ -42,6 +43,10 @@ const App = () => {
                   <LoggedInHeader>
                     <Link to="/my-applications" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> My Applications </Link>
                   </LoggedInHeader>
+                  <ManagerHeader>
+                    <Link to="/edit-inventory" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Edit Inventory </Link>
+                  </ManagerHeader>
+
                 </div>
                 <div>
                   <div className="flex items-center">
@@ -51,7 +56,7 @@ const App = () => {
               </div>
             </nav>
           </header>
-          
+
           <Routes>
             <Route
               path="/home"
@@ -88,6 +93,7 @@ const App = () => {
             ></Route>
             <Route path="/login" element={<LoginPage />}></Route>
             <Route path="/application/:id" element={<ApplicationDetailPage />}></Route>
+            <Route path="/edit-inventory" element={<EditInventoryPage />}></Route>
           </Routes>
         </QueryClientProvider>
       </BrowserRouter>
