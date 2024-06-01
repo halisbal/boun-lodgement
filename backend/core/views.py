@@ -562,6 +562,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
+        methods=["GET"],
+        url_path="get",
+        permission_classes=[IsAuthenticatedManager],
+    )
+    def get_application_manager(self, request):
+        data = request.data
+        application_id = data.get("application_id")
+        application = Application.objects.get(id=application_id)
+        serializer = ApplicationSerializer(application)
+        return Response(serializer.data)
+
+    @action(
+        detail=False,
         methods=["POST"],
         url_path="review",
         permission_classes=[IsAuthenticatedManager],
