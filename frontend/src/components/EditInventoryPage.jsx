@@ -7,6 +7,7 @@ import LodgementList from './LodgementList';
 import SortableTable from './SortableTable';
 import fetchQueues from '../fetches/fetchQueues.js';
 import { apiService } from '../services/apiService';
+import MyAlert from './MyAlert.jsx';
 
 const emptyLodgement = {
     name: "",
@@ -120,6 +121,9 @@ const EditInventoryPage = () => {
 
     return (
         <div className='w-2/3 mx-auto justify-center pt-4'>
+
+            {alert.visible && <MyAlert color={alert.type}>{alert.message}</MyAlert>}
+
             <div className='flex flex row justify-between py-8 w-full'>
                 <Typography variant="h4" color="blue-gray" className="font-semibold">
                     <label>Lodgement Inventory</label>
