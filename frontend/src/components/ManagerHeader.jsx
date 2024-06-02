@@ -8,7 +8,7 @@ const ManagerHeader = ({children}) => {
     if(!isLoggedIn){
         return <div></div>  
     }
-    if(user?.role !== 'Manager'){
+    if(user?.role !== 'Manager' && user?.role !== 'Admin'){
         console.log("mh : ", user?.role)
         return <div></div>
     }

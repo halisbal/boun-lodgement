@@ -5,7 +5,7 @@ import { Button, Alert, Dialog, DialogBody, DialogFooter, DialogHeader, Input, L
 import { PencilIcon } from "@heroicons/react/24/solid";
 import LodgementList from './LodgementList';
 import SortableTable from './SortableTable';
-import fetchQueues from '../fetchs/fetchQueues.js';
+import fetchQueues from '../fetches/fetchQueues.js';
 import { apiService } from '../services/apiService';
 
 const emptyLodgement = {
@@ -24,7 +24,7 @@ const EditInventoryPage = () => {
     const [selectedLodgementInfo, setSelectedLodgementInfo] = useState(emptyLodgement);
 
     const { data: lodgements, isLoading, error } = useQuery(["lodgementList"], lodgementService.getLodgementList);
-    const { data: queues } = useQuery(["queueList"], fetchQueues);
+    const { data: queues, isLoading: queueLoading, error:queueError } = useQuery(["queueList"], fetchQueues);
 
     const queryClient = useQueryClient();
 
@@ -109,11 +109,11 @@ const EditInventoryPage = () => {
     }
     const handleClose = () => setIsOpen(false);
 
-    if (isLoading) {
+    if (isLoading || queueLoading) {
         return <p>Loading...</p>;
     }
-    if (error) {
-        return <p>Error: {error.message}</p>;
+    if (error || queueError) {
+        return <p>Error: {error?.message || queueError.message}</p>;
     }
 
     const TABLE_HEADERS = ["Name", "Size", "Description", "Location", "Is Available", "Queue ID", ""];

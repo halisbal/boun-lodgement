@@ -1,10 +1,11 @@
 import { List, ListItem, Input, Checkbox, Button, Card, Select, Option, Tooltip, IconButton } from "@material-tailwind/react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useState } from "react";
-import fetchApplicationDetail from "../fetchs/fetchApplicationDetail";
+import fetchApplicationDetail from "../fetches/fetchApplicationDetail";
 import { apiService } from "../services/apiService";
+import MyAlert from "./MyAlert";
 
 
 const ApplicationDetailPage = () => {
@@ -16,8 +17,11 @@ const ApplicationDetailPage = () => {
     const [selectedDocument, setSelectedDocument] = useState();
     const [file, setFile] = useState();
     const [uploadedDocs, setUploadedDocs] = useState([]);
-    const [visibleDescription, setVisibleDescription] = useState(null);
     const [isLocked, setIsLocked] = useState(false);
+    const [alert, setAlert] = useState({ message: '', status: 'success', visible: false });
+
+
+    const queryClient = useQueryClient();
 
     // Initialize form values when data is loaded
     useEffect(() => {
@@ -45,6 +49,45 @@ const ApplicationDetailPage = () => {
     if (status === 'error') return <div>Error: {error.message}</div>;
     if (!data) return <div>No data found.</div>;
 
+
+    const showAlert = (message, type = 'success') => {
+        setAlert({ message, type, visible: true });
+        console.log("Alert");
+
+        // Automatically close the alert after 3 seconds
+        setTimeout(() => {
+            setAlert({ ...alert, visible: false });
+        }, 3000);
+    };
+
+
+    const closeAlert = () => {
+        setAlert({ ...alert, visible: false });
+    };
+
+
+
+
+    const handleCancel = async () => {
+        await apiService.post(`/application/${id}/cancel/`);
+        showAlert("Application cancelled successfully", "error");
+        queryClient.invalidateQueries(['applicationDetail', id]);
+
+    };
+
+    const handleSendToApproval = async () => {
+        await apiService.post(`/application/${id}/send_to_approve/`);
+        showAlert("Application sent to approval successfully", "success");
+        queryClient.invalidateQueries(['applicationDetail', id]);
+    };
+
+    const handleCancelSendApproval = async () => {
+        await apiService.post(`/application/${id}/cancel_approval/`);
+        showAlert("Application approval cancelled successfully", "error");
+        queryClient.invalidateQueries(['applicationDetail', id]);
+    };
+
+
     const handleChange = (id, event, type) => {
         const value = type === "Boolean" ? event.target.checked : parseInt(event.target.value);
         setFormValues(prev => ({ ...prev, [id]: value }));
@@ -61,6 +104,13 @@ const ApplicationDetailPage = () => {
         // Here you would typically use fetch or axios to send `formValues` to the server
 
         apiService.post(`/application/${id}/submit-scoring-form/`, arr)
+            .then(() => {
+                showAlert("Form submitted successfully");
+                queryClient.invalidateQueries(['applicationDetail', id]);
+            })
+            .catch(() => {
+                showAlert("Form submission failed", "error");
+            });
 
     };
 
@@ -68,11 +118,23 @@ const ApplicationDetailPage = () => {
         const file = event.target.files[0];
         console.log("File selected", file);
         setFile(file);
+        showAlert("File selected: " + file.name, "info");
         // Here you would typically use fetch or axios to send `file` to the server
 
     }
 
+    const handleDrop = (e) => {
+        e.preventDefault();
+        const uploadedFile = e.dataTransfer.files[0];
+        setFile(uploadedFile);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+    };
+
     const handleUploadDocumentClick = async () => {
+        showAlert("Uploading document...", "info");
         const presigned_url = await apiService.get(`/application/${id}/submit-documents/presigned-url/?document_id=${selectedDocument}&file_format=${file.name.split('.').pop()}`);
         console.log(file.name.split('.').pop());
         console.log("Uploading document", presigned_url);
@@ -88,15 +150,18 @@ const ApplicationDetailPage = () => {
         }).then(response => {
             if (response.ok) {
                 console.log('Upload successful');
+                showAlert("Document uploaded successfully");
                 return response; // or response.json() if the response is JSON
             } else {
                 console.error('Upload failed');
+                showAlert("Document upload failed", "error");
                 return response.text().then(text => Promise.reject(text));
             }
         }).then(data => {
             console.log(data);
         }).catch(error => {
             console.error('Error during upload:', error);
+            showAlert("Document upload failed", "error");
         });
 
 
@@ -104,12 +169,11 @@ const ApplicationDetailPage = () => {
         setUploadedDocs(prev => [...prev, { name: file.name, is_approved: false, link: presigned_url?.fields.key }]);
     }
 
-    const toggleDescription = (index) => {
-        setVisibleDescription(visibleDescription === index ? null : index);
-    };
-
     return (
         <div className="bg-gray-100 p-14">
+
+            {alert.visible && <MyAlert message={alert.message} type={alert.type} onClose={closeAlert} visible={alert.visible} />}
+
             <div className="w-8/12 mx-auto ">
                 <label className="text-2xl">BAŞVURU DETAY</label>
             </div>
@@ -154,19 +218,19 @@ const ApplicationDetailPage = () => {
                     <div>
                         <Button color="red"
                             disabled={data?.status === 'In Progress' || data?.status === 'Pending' || data?.status === 'Re Upload' ? false : true}
-                            onClick={() => {apiService.post(`/application/${id}/cancel/`); window.location.reload();}}
+                            onClick={handleCancel}
                             className="w-1/4 ml-2 my-1">
                             Cancel
                         </Button>
                         <Button color="green"
                             disabled={data?.status === 'In Progress' || data?.status === 'Re Upload' ? false : true}
-                            onClick={() => {apiService.post(`/application/${id}/send_to_approve/`); window.location.reload();}}
+                            onClick={handleSendToApproval}
                             className="w-1/4 ml-2 my-1">
                             Send To Approval
                         </Button>
                         <Button color="red"
                             disabled={data?.status === 'Pending' ? false : true}
-                            onClick={() => {apiService.post(`/application/${id}/cancel_approval/`); window.location.reload();}}
+                            onClick={handleCancelSendApproval}
                             className="w-1/4 ml-2 my-1">
                             Cancel Send Approval
                         </Button>
@@ -263,26 +327,60 @@ const ApplicationDetailPage = () => {
 
                 </div>
 
-                <div className="flex items-center bg-white justify-center w-8/12">
-                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                <div className="flex flex-col items-center bg-white justify-center w-8/12 p-4 border border-gray-300 rounded-lg shadow-md">
+                    <label
+                        htmlFor="dropzone-file"
+                        className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                    >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                            <svg
+                                className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 20 16"
+                            >
+                                <path
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                                />
                             </svg>
-                            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+                            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                                <span className="font-semibold">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                SVG, PNG, JPG or GIF (MAX. 800x400px)
+                            </p>
                         </div>
-                        <input disabled={isLocked} id="dropzone-file" type="file" className="hidden" onChange={handleFileChange} />
+                        <input
+                            disabled={isLocked}
+                            id="dropzone-file"
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
                     </label>
+                    {file && (
+                        <div className="mt-4">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">Uploaded file: <span className="font-medium">{file.name}</span></p>
+                        </div>
+                    )}
                 </div>
-                <div className="w-8/12">
 
+
+
+                <div className="w-8/12">
                     <List>
                         {uploadedDocs.map((doc) => (
                             <ListItem key={doc.name} className="w-full">
                                 <div className="flex justify-between w-full items-center">
                                     <div>
-                                        <a href={doc.link}>{doc.name}</a>
+                                        <a href={doc.link} target="_blank">{doc.name}</a>
                                     </div>
                                     <div>
                                         <label className="">{doc.is_approved ? "Approved" : "Not Approved"}</label>

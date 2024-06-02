@@ -1,11 +1,11 @@
 import { Select, Option, Button, Accordion, AccordionBody, AccordionHeader, Tooltip } from "@material-tailwind/react";
 import DefaultTable from "./DefaultTable";
-import fetchQueues from "../fetchs/fetchQueues";
+import fetchQueues from "../fetches/fetchQueues";
 import { useQuery } from "@tanstack/react-query";
 import { apiService } from "../services/apiService";
 import { useState, useEffect } from "react";
 import { Input, Checkbox, Card, List, ListItem } from "@material-tailwind/react";
-import fetchScoringForm from "../fetchs/fetchScoringForm";
+import fetchScoringForm from "../fetches/fetchScoringForm";
 
 const ApplyPage = () => {
 
