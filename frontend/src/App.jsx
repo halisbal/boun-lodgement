@@ -32,28 +32,28 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <header className="bg-white-900 text-white p-4">
+          <header className="bg-white-900 p-4">
             <nav className="">
               <div className="container mx-auto flex justify-between items-center">
                 <div className="flex items-center">
                   <Link to="/home" className="mx-4"> <img src="/boun_logo.svg" alt="Bogazici University Logo" className="h-8 w-auto" /> </Link>
                   <LoggedInHeader>
-                    <Link to="/lodgements" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Lodgements </Link>
+                    <Link to="/lodgements" className="text-lg mx-4  hover:text-gray-700 mr-4"> Lodgements </Link>
                   </LoggedInHeader>
                   <LoggedInHeader>
-                    <Link to="/apply" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Apply </Link>
+                    <Link to="/apply" className="text-lg mx-4  hover:text-gray-700 mr-4"> Apply </Link>
                   </LoggedInHeader>
                   <LoggedInHeader>
-                    <Link to="/my-applications" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> My Applications </Link>
+                    <Link to="/my-applications" className="mx-4 text-lg hover:text-gray-700 mr-4"> My Applications </Link>
                   </LoggedInHeader>
                   <ManagerHeader>
-                    <Link to="/edit-inventory" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Edit Inventory </Link>
+                    <Link to="/edit-inventory" className="text-lg mx-4  hover:text-gray-700 mr-4"> Edit Inventory </Link>
                   </ManagerHeader>
                   <ManagerHeader>
-                    <Link to="/manage-applications" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Manage Applications </Link>
+                    <Link to="/manage-applications" className="text-lg mx-4 hover:text-gray-700 mr-4"> Manage Applications </Link>
                   </ManagerHeader>
                   <ManagerHeader>
-                    <Link to="/manage-users" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Manage Users </Link>
+                    <Link to="/manage-users" className="text-lg mx-4  hover:text-gray-700 mr-4"> Manage Users </Link>
                   </ManagerHeader>
                 </div>
                 <div>

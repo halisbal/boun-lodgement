@@ -171,7 +171,7 @@ const ApplyPage = () => {
                                     </ListItem>
                                 ))}
                             </List>
-                            <Button var onClick={handleEvaluate} className="w-1/3 block ml-auto mr-0 py-4 mt-4 mb-6">Evaluate</Button>
+                            <Button variant="outlined" onClick={handleEvaluate} className="w-1/3 block ml-auto mr-0 py-4 mt-4 mb-6">Evaluate</Button>
                         </div>
                         <div className="flex flex-col justify-items-start">
                             <label className="pt-6">Your current score: {evalStats.score}</label>
@@ -184,7 +184,7 @@ const ApplyPage = () => {
 
 
 
-            <Button variant="outlined" className="w-full py-4 mt-5 text-base " onClick={applyQueue}> Apply</Button>
+            <Button variant="" color='green' className="w-full py-4 mt-5 text-base " onClick={applyQueue}> Apply</Button>
         </div>
     </div>);
 }

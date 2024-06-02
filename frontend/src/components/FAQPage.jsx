@@ -7,6 +7,7 @@ import {
 } from '@material-tailwind/react';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/apiService';
+import DOMPurify from 'dompurify';
 
 
 const FAQ = () => {
@@ -31,7 +32,7 @@ const FAQ = () => {
     return (
         <div className="w-full mx-auto mt-20">
             <Typography variant="h2" color="blue-gray" className="mb-8 mt-8 font-bold">
-                Sıkça Sorulan Sorular
+                F.A.Q.
             </Typography>
             {faqData.sort((a, b) => a.order - b.order).map((item, index) => (
                 <Accordion
@@ -44,9 +45,9 @@ const FAQ = () => {
                         </Typography>
                     </AccordionHeader>
                     <AccordionBody>
-                        <Typography variant="p" color="blue-gray" className="font-normal">
-                            {item.answer}
-                        </Typography>
+                        <div variant="div" className="font-normal contents text-blue-gray-900" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.answer) }}>
+                            
+                        </div>
                     </AccordionBody>
                 </Accordion>
             ))}

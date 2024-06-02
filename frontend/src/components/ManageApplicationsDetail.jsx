@@ -42,7 +42,7 @@ const ManageApplicationsDetail = () => {
 
     const handleApprove = () => {
 
-        apiService.post(`/application/review/`, { application_id: id, system_message : reason, status: 3 }).then(res => {
+        apiService.post(`/application/review/`, { application_id: id, system_message: reason, status: 3 }).then(res => {
             navigate("/manage-applications");
             showAlert("Application approved successfully");
         }).catch(err => {
@@ -74,79 +74,78 @@ const ManageApplicationsDetail = () => {
     }
 
     return (
-            <div>
-                {alert.visible && <MyAlert message={alert.message} type={alert.type} onClose={closeAlert} visible={alert.visible} />}
+        <div className="bg-gray-200">
+            {alert.visible && <MyAlert message={alert.message} type={alert.type} onClose={closeAlert} visible={alert.visible} />}
+            <Card className="m-8">
+                <CardBody>
+                    <Typography
+                        color="blue-gray"
+                        className="mb-2"
+                        variant="h4"
 
-                <Card>
-                    <CardBody>
-                        <Typography
-                            color="blue-gray"
-                            className="mb-2"
-                            variant="h4"
+                    >Details</Typography>
+                    <div className="mb-4">
+                        <p><strong>Status:</strong> {application.status}</p>
+                        <p><strong>Role:</strong> {application.user.role}</p>
+                        <p><strong>Type:</strong> {application.user.type}</p>
+                        <p><strong>Email:</strong> {application.user.email}</p>
+                        <p><strong>Application Date:</strong> {new Date(application.created_at).toLocaleString(undefined, { year: "numeric", month: "long", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</p>
+                        <p><strong>Lodgement Type:</strong> {application.queue.lodgement_type}</p>
+                        <p><strong>Personel Type:</strong> {application.queue.personel_type}</p>
+                        <p><strong>Lodgement Size:</strong> {application.queue.lodgement_size}</p>
+                        <p><strong>Rank:</strong> {application.rank}</p>
+                        <p><strong>Total Points:</strong> {application.total_points}</p>
+                        <p><strong>Estimated Availability:</strong> {application.estimated_availability}</p>
+                    </div>
 
-                        >Details</Typography>
-                        <div className="mb-4">
-                            <p><strong>Status:</strong> {application.status}</p>
-                            <p><strong>Role:</strong> {application.user.role}</p>
-                            <p><strong>Type:</strong> {application.user.type}</p>
-                            <p><strong>Email:</strong> {application.user.email}</p>
-                            <p><strong>Application Date:</strong> {new Date(application.created_at).toLocaleString(undefined, { year: "numeric", month: "long", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</p>
-                            <p><strong>Lodgement Type:</strong> {application.queue.lodgement_type}</p>
-                            <p><strong>Personel Type:</strong> {application.queue.personel_type}</p>
-                            <p><strong>Lodgement Size:</strong> {application.queue.lodgement_size}</p>
-                            <p><strong>Rank:</strong> {application.rank}</p>
-                            <p><strong>Total Points:</strong> {application.total_points}</p>
-                            <p><strong>Estimated Availability:</strong> {application.estimated_availability}</p>
-                        </div>
+                    <Typography
+                        color="blue-gray"
+                        className="mb-2"
+                        variant="h4"
 
-                        <Typography
-                            color="blue-gray"
-                            className="mb-2"
-                            variant="h4"
+                    >Uploaded Documents</Typography>
+                    <ul className="mb-4">
+                        {application.documents.length == 0 ? "No uploaded documents" : application.documents.map(doc => (
+                            <li key={doc.id}>
+                                <p><strong>{doc.document.name}:</strong></p>
+                                {doc.file && <a href={doc.file} target="_blank" rel="noopener noreferrer" className="text-blue-500">View Document</a>}
+                            </li>
+                        ))}
+                    </ul>
 
-                        >Uploaded Documents</Typography>
-                        <ul className="mb-4">
-                            {application.documents.length == 0 ? "No uploaded documents" : application.documents.map(doc => (
-                                <li key={doc.id}>
-                                    <p><strong>{doc.document.name}:</strong></p>
-                                    {doc.file && <a href={doc.file} target="_blank" rel="noopener noreferrer" className="text-blue-500">View Document</a>}
-                                </li>
-                            ))}
-                        </ul>
+                    <Typography
+                        color="blue-gray"
+                        className="mb-2"
+                        variant="h4"
 
-                        <Typography
-                            color="blue-gray"
-                            className="mb-2"
-                            variant="h4"
+                    >Scroring Form</Typography>
+                    <ul className="mb-4">
+                        {application.scoring_form.items.map(item => (
+                            <li key={item.id}>
+                                <p><strong>{item.label}:</strong> {item.answer ? item.answer.value : 'N/A'}</p>
+                                <p className="text-sm text-gray-500">{item.caption}</p>
+                            </li>
+                        ))}
+                    </ul>
 
-                        >Scroring Form</Typography>
-                        <ul className="mb-4">
-                            {application.scoring_form.items.map(item => (
-                                <li key={item.id}>
-                                    <p><strong>{item.label}:</strong> {item.answer ? item.answer.value : 'N/A'}</p>
-                                    <p className="text-sm text-gray-500">{item.caption}</p>
-                                </li>
-                            ))}
-                        </ul>
+                    <Textarea
+                        color="blue"
+                        label="Review Message"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        className="mb-4"
+                    />
+                </CardBody>
+                <CardFooter className="flex justify-end">
+                    <Button color="red" className="mr-2" onClick={handleReject}>Reject</Button>
+                    <Button color="amber" className="mr-2" onClick={handleReupload}>Re-Upload</Button>
+                    <Button color="green" onClick={handleApprove} className="mr-2">Approve</Button>
 
-                        <Textarea
-                            color="blue"
-                            label="Reason"
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            className="mb-4"
-                        />
-                    </CardBody>
-                    <CardFooter className="flex justify-end">
-                        <Button color="red" className="mr-2" onClick={handleReject}>Reject</Button>
-                        <Button color="amber" className="mr-2" onClick={handleReupload}>Re-Upload</Button>
-                        <Button color="green" onClick={handleApprove} className="mr-2">Approve</Button>
+                </CardFooter>
+            </Card>
 
-                    </CardFooter>
-                </Card>
+        </div>
+    );
+};
 
-            </div>
-        );
-    };
-
-    export default ManageApplicationsDetail;
+export default ManageApplicationsDetail;

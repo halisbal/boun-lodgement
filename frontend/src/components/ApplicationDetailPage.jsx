@@ -1,4 +1,4 @@
-import { List, ListItem, Input, Checkbox, Button, Card, Select, Option, Tooltip, IconButton } from "@material-tailwind/react";
+import { List, ListItem, Input, Checkbox, Button, Card, Select, Option, Tooltip, IconButton, Typography } from "@material-tailwind/react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -175,44 +175,52 @@ const ApplicationDetailPage = () => {
             {alert.visible && <MyAlert message={alert.message} type={alert.type} onClose={closeAlert} visible={alert.visible} />}
 
             <div className="w-8/12 mx-auto ">
-                <label className="text-2xl">BAŞVURU DETAY</label>
+                <Typography color="blue-gray" variant="h4">Application Details</Typography>
             </div>
             <div className="w-2/3 mx-auto mt-6 bg-white rounded-xl shadow-md">
                 <List>
                     <ListItem>
                         <div className="flex w-5/12 justify-between justify-items-center">
-                            <label className="">Queue:</label>
-                            <label className="text-center block">{data?.queue.lodgement_type + " " + data?.queue.personel_type + " " + data?.queue.lodgement_size}</label>
+                            <Typography className="font-normal">Queue:</Typography>
+                            <Typography className="text-center block font-normal">{data?.queue.lodgement_type + " " + data?.queue.personel_type + " " + data?.queue.lodgement_size}</Typography>
                         </div>
                     </ListItem>
                     <ListItem>
                         <div className="flex w-5/12 justify-between justify-items-center">
-                            <label className="">Başvuru Tarihi:</label>
-                            <label className="text-center block">{data?.created_at}</label>
+                            <Typography className=" font-normal">Application Date:</Typography>
+                            <Typography className="text-center block font-normal">{data?.created_at}</Typography>
                         </div>
                     </ListItem>
                     <ListItem>
                         <div className="flex w-5/12 justify-between justify-items-center">
-                            <label className="">Başvuru Durumu:</label>
-                            <label className="text-center block">{data?.status}</label>
+                            <Typography className=" font-normal">Status:</Typography>
+                            <Typography className="text-center block font-normal">{data?.status}</Typography>
+                        </div>
+                    </ListItem>
+                    {data?.status === 'Rejected' &&
+                        <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <Typography className=" font-normal">Review Message: </Typography>
+                            <Typography className="text-center block font-normal">{data?.status}</Typography>
+                        </div>
+                    </ListItem>
+                    }
+                    <ListItem>
+                        <div className="flex w-5/12 justify-between justify-items-center">
+                            <Typography className=" font-normal">Rank:</Typography>
+                            <Typography className="text-center block font-normal">{data?.rank}</Typography>
                         </div>
                     </ListItem>
                     <ListItem>
                         <div className="flex w-5/12 justify-between justify-items-center">
-                            <label className="">Rank:</label>
-                            <label className="text-center block">{data?.rank}</label>
+                            <Typography className=" font-normal">Estimated Availability Date:</Typography>
+                            <Typography className="text-center block font-normal">{data?.estimated_availability}</Typography>
                         </div>
                     </ListItem>
                     <ListItem>
                         <div className="flex w-5/12 justify-between justify-items-center">
-                            <label className="">Estimated Availability Date:</label>
-                            <label className="text-center block">{data?.estimated_availability}</label>
-                        </div>
-                    </ListItem>
-                    <ListItem>
-                        <div className="flex w-5/12 justify-between justify-items-center">
-                            <label className="">Total Points:</label>
-                            <label className="text-center block">{data?.total_points}</label>
+                            <Typography className=" font-normal">Total Points:</Typography>
+                            <Typography className="text-center block font-normal">{data?.total_points}</Typography>
                         </div>
                     </ListItem>
                     <div>
@@ -243,7 +251,7 @@ const ApplicationDetailPage = () => {
 
 
             <div className="w-8/12 mx-auto mt-12">
-                <label className="text-2xl">BAŞVURU CETVELİ</label>
+                <Typography variant="h4" className=" blue-gray-900">Scoring Form</Typography>
             </div>
 
             <div className="flex flex-col items-center mt-6">
@@ -253,7 +261,7 @@ const ApplicationDetailPage = () => {
                             <ListItem key={item.id} className="w-full">
                                 <div className="flex justify-between w-full items-center">
                                     <div className="flex flex-row">
-                                        <label className="">{item.label}</label>
+                                        <Typography className=" blue-gray-900 font-normal">{item.label}</Typography>
                                         <Tooltip
 
                                             content={
@@ -383,7 +391,7 @@ const ApplicationDetailPage = () => {
                                         <a href={doc.link} target="_blank">{doc.name}</a>
                                     </div>
                                     <div>
-                                        <label className="">{doc.is_approved ? "Approved" : "Not Approved"}</label>
+                                        <Typography className="">{doc.is_approved ? "Approved" : "Not Approved"}</Typography>
                                     </div>
                                 </div>
                             </ListItem>
