@@ -562,7 +562,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        methods=["GET"],
+        methods=["POST"],
         url_path="get",
         permission_classes=[IsAuthenticatedManager],
     )

@@ -14,6 +14,9 @@ import ListApplicationsPage from "./components/ListApplicationsPage";
 import ApplicationDetailPage from "./components/ApplicationDetailPage";
 import EditInventoryPage from "./components/EditInventoryPage";
 import ManagerHeader from "./components/ManagerHeader";
+import ManageApplicationsPage from "./components/ManageApplicationsPage";
+import ManageApplicationsDetail from "./components/ManageApplicationsDetail";
+import ManageUsers from "./components/ManageUsers";
 const queryClient = new QueryClient({
   defaultOptions: {
     staleTime: Infinity,
@@ -46,7 +49,12 @@ const App = () => {
                   <ManagerHeader>
                     <Link to="/edit-inventory" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Edit Inventory </Link>
                   </ManagerHeader>
-
+                  <ManagerHeader>
+                    <Link to="/manage-applications" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Manage Applications </Link>
+                  </ManagerHeader>
+                  <ManagerHeader>
+                    <Link to="/manage-users" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Manage Users </Link>
+                  </ManagerHeader>
                 </div>
                 <div>
                   <div className="flex items-center">
@@ -94,6 +102,10 @@ const App = () => {
             <Route path="/login" element={<LoginPage />}></Route>
             <Route path="/application/:id" element={<ApplicationDetailPage />}></Route>
             <Route path="/edit-inventory" element={<EditInventoryPage />}></Route>
+            <Route path="/manage-applications" element={<ManageApplicationsPage />}></Route>
+            <Route path="/manage-application-detail/:id" element={<ManageApplicationsDetail />}></Route>
+            <Route path="/manage-users" element={<ManageUsers />}></Route>
+            <Route path="*" element={<div>Not Found</div>}></Route>
           </Routes>
         </QueryClientProvider>
       </BrowserRouter>

@@ -1,7 +1,7 @@
 import { List, ListItem, Card } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import fetchApplications from "../fetchs/fetchApplications";
+import fetchApplications from "../fetches/fetchApplications";
 
 export default function ListApplicationsPage() {
 
