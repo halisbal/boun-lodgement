@@ -28,6 +28,7 @@ from .models import (
     ScoringFormItem,
     ScoringFormLog,
     Announcement,
+    FaqComponent,
 )
 from .permissions import IsAuthenticatedManager
 from .serializers import (
@@ -37,6 +38,7 @@ from .serializers import (
     ScoringFormItemSerializer,
     ApplicationListSerializer,
     AnnouncementSerializer,
+    FaqComponentSerializer,
 )
 
 
@@ -617,4 +619,14 @@ class AnnouncementListView(viewsets.ViewSet):
     def list(self, request):
         queryset = self.queryset
         serializer = AnnouncementSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class FaqComponentListView(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = FaqComponent.objects.filter(is_visible=True).order_by("order")
+
+    def list(self, request):
+        queryset = self.queryset
+        serializer = FaqComponentSerializer(queryset, many=True)
         return Response(serializer.data)

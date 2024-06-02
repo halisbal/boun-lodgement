@@ -15,6 +15,7 @@ from .models import (
     Document,
     ApplicationDocument,
     Announcement,
+    FaqComponent,
 )
 
 
@@ -253,3 +254,9 @@ class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
         fields = ["id", "created_at", "title", "content"]
+
+
+class FaqComponentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FaqComponent
+        fields = ["question", "answer", "order"]

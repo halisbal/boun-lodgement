@@ -10,6 +10,7 @@ from .models import (
     Assignment,
     ScoringFormItem,
     Announcement,
+    FaqComponent,
 )
 
 
@@ -93,6 +94,12 @@ class AnnouncementAdmin(admin.ModelAdmin):
     ordering = ["-created_at"]
 
 
+class FaqComponentAdmin(admin.ModelAdmin):
+    list_display = ["question", "answer", "is_visible", "order"]
+    list_filter = ["is_visible"]
+    ordering = ["order"]
+
+
 admin.site.register(Lodgement, LodgementAdmin)
 admin.site.register(Document, DocumentAdmin)
 admin.site.register(Application, ApplicationAdmin)
@@ -101,3 +108,4 @@ admin.site.register(Queue, QueueAdmin)
 admin.site.register(Assignment, AssignmentAdmin)
 admin.site.register(ScoringFormItem, ScoringFormItemAdmin)
 admin.site.register(Announcement, AnnouncementAdmin)
+admin.site.register(FaqComponent, FaqComponentAdmin)

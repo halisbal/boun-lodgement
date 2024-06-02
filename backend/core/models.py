@@ -459,3 +459,13 @@ class Announcement(BaseModel):
 
     def __str__(self):
         return self.title
+
+
+class FaqComponent(BaseModel):
+    question = models.TextField()
+    answer = models.TextField()
+    order = models.IntegerField()
+    is_visible = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.question
