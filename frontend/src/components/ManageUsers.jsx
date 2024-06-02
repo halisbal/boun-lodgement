@@ -21,34 +21,38 @@ import {
     DialogHeader,
     DialogBody,
     DialogFooter,
+    Select,
+    Option,
+    Checkbox,
 
 } from "@material-tailwind/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { apiService } from "../services/apiService";
 import { defer } from "react-router-dom";
+import MyAlert from "./MyAlert";
 
 
 const ROLES = {
-    1:"User",
-    2:"Manager",
-    3:"Admin"
+    "1": "User",
+    "2": "Manager",
+    "3": "Admin"
 }
 const ROLES_REVERSE = {
-    "User":1,
-    "Manager":2,
-    "Admin":3
+    "User": "1",
+    "Manager": "2",
+    "Admin": "3"
 }
 
 const TYPES = {
-    1:"Akademik",
-    2:"İdari",
-    3:"Görevli"
+    "1": "Akademik",
+    "2": "İdari",
+    "3": "Görevli"
 }
 const TYPES_REVERSE = {
-    "Akademik":1,
-    "İdari":2,
-    "Görevli":3
+    "Akademik": "1",
+    "İdari": "2",
+    "Görevli": "3"
 }
 
 
@@ -71,7 +75,7 @@ const TABS = [
     },
 ];
 
-const TABLE_HEAD = ["Id", "Name", "Email", "Role", "Type", "Is Active", "Join Date", ""];
+const TABLE_HEAD = ["ID", "Name", "Email", "Role", "Type", "Is Active", "Join Date", ""];
 
 const ManageUsers = () => {
     const { data: users, isLoading, error } = useQuery(["all-users"], () => apiService.get(`/auth/user/`));
@@ -82,13 +86,16 @@ const ManageUsers = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState({});
+    const [alert, setAlert] = useState({ message: '', type: 'success', visible: false });
+
+    const queryClient = useQueryClient();
 
     const filteredUsers = useMemo(() => {
         let filtered = users || [];
 
         if (activeTab !== "all") {
             console.log("activeTab : ", activeTab)
-            
+
             filtered = filtered.filter(user => user.type === activeTab);
         }
 
@@ -132,14 +139,57 @@ const ManageUsers = () => {
 
     const handleEditSelection = (id) => {
         const user = users.find(user => user.id === id);
-        setSelectedUser(user);
+        console.log("user : ", user);
+        const editedUser = { ...user, role: ROLES_REVERSE[user.role], type: TYPES_REVERSE[user.type] };
+        console.log("editedUser : ", editedUser);
+        setSelectedUser(editedUser);
         setIsOpen(true);
     }
 
     const handleSave = () => {
-        console.log("Save");
-        setIsOpen(false);
+
+        console.log("selectedUser : ", selectedUser);
+        apiService.patch(`/auth/user/${selectedUser.id}/edit/`, selectedUser).then((res) => {
+            console.log("Response : ", res);
+            if (res) {
+                queryClient.invalidateQueries("all-users");
+                console.log("User updated successfully");
+                showAlert("User updated successfully");
+
+                setIsOpen(false);
+            } else {
+                console.log("Error updating user");
+                showAlert("Error updating user", "error");
+                setIsOpen(false);
+            }
+        }
+        ).catch((err) => {
+            console.log("Error : ", err);
+            showAlert("Error updating user", "error");
+            setIsOpen(false);
+        }).finally(() => {
+            setSelectedUser({});
+        });
+
+
     }
+
+
+    const showAlert = (message, type = 'success') => {
+        setAlert({ message, type, visible: true });
+
+        // Automatically close the alert after 3 seconds
+        setTimeout(() => {
+            setAlert({ ...alert, visible: false });
+        }, 3000);
+    };
+
+    const closeAlert = () => {
+        setAlert({ ...alert, visible: false });
+    };
+
+
+
 
     if (isLoading) {
         return <div>Loading...</div>;
@@ -151,6 +201,7 @@ const ManageUsers = () => {
 
     return (
         <div className="flex justify-center">
+            {alert.visible && <MyAlert message={alert.message} type={alert.type} onClose={closeAlert} visible={alert.visible} />}
             <Card className="h-full w-11/12 mt-8">
                 <CardHeader floated={false} shadow={false} className="rounded-none">
                     <div className="mb-8 flex items-center justify-between gap-8">
@@ -160,7 +211,7 @@ const ManageUsers = () => {
                             </Typography>
                         </div>
                         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                           
+
                         </div>
                     </div>
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
@@ -317,16 +368,71 @@ const ManageUsers = () => {
                     </div>
                 </CardFooter>
             </Card>
-            <Dialog size='sm' open={isOpen} handler={setIsOpen}>
-                    <DialogHeader>Lodgement Info</DialogHeader>
-                    <DialogBody >
-                        <Typography color='blue-gray' className='mb-2' variant='h6'>Id : {selectedUser.id}</Typography>
-                    </DialogBody>
-                    <DialogFooter>
-                        <Button className='mx-1' color="red" onClick={()=> setIsOpen(false)}>Cancel</Button>
-                        <Button className=''color="blue" onClick={handleSave}>Save</Button>
-                    </DialogFooter>
-                </Dialog>
+
+            <Dialog size='xs' open={isOpen} handler={setIsOpen}>
+                <DialogHeader>User Info</DialogHeader>
+                <DialogBody className="px-8" >
+                    <Typography color='blue-gray' className='mb-3 font-normal' variant='h6'>ID : {selectedUser.id}</Typography>
+                    <Typography color='blue-gray' className='mb-3 font-normal' variant='h6'>Name : {selectedUser.first_name + " " + selectedUser.last_name}</Typography>
+                    <Typography color='blue-gray' className='mb-4 font-normal' variant='h6'>Email : {selectedUser.email}</Typography>
+                    <div className="flex flex-row mb-3 items-center ">
+                        <div className="w-2/12" >
+                            <Typography color='blue-gray' className='font-normal' variant='h6'>Role :  </Typography>
+                        </div>
+                        <div className="w-9/12">
+                            <Select variant="static" value={selectedUser.role} onChange={(val) => setSelectedUser(
+                                (prevState) => ({
+                                    ...prevState,
+                                    role: val
+                                })
+                            )}>
+                                {Object.keys(ROLES).map((role) => (
+                                    <Option key={role} value={role}>
+                                        {ROLES[role]}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-row items-center mb-3 ">
+                        <div className="w-2/12">
+                            <Typography color='blue-gray' className="font-normal" variant='h6'>Type :  </Typography>
+                        </div>
+                        <div className="w-9/12">
+                            <Select variant="static" value={selectedUser.type} onChange={(val) => setSelectedUser(
+                                (prevState) => ({
+                                    ...prevState,
+                                    type: val
+                                })
+                            )}>
+                                {Object.keys(TYPES).map((type) => (
+                                    <Option key={type} value={type}>
+                                        {TYPES[type]}
+                                    </Option>
+                                ))}
+                            </Select>
+                        </div>
+
+                    </div>
+                    <div className="flex flex-row items-center mb-3">
+                        <Typography color='blue-gray' className='font-normal' variant='h6'>Is Active :</Typography>
+                        <Checkbox color='blue' checked={selectedUser.is_active} onChange={(e) => setSelectedUser({ ...selectedUser, is_active: e.target.checked })} />
+                    </div>
+
+                    <Typography color='blue-gray' className='mb-3 font-normal' variant='h6'>Join Date : {new Date(selectedUser.date_joined).toLocaleString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    })}</Typography>
+                </DialogBody>
+                <DialogFooter>
+                    <Button className='mx-1' color="red" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button className='' color="blue" onClick={handleSave}>Save</Button>
+                </DialogFooter>
+            </Dialog>
         </div>
 
 

@@ -19,8 +19,8 @@ import ManageApplicationsDetail from "./components/ManageApplicationsDetail";
 import ManageUsers from "./components/ManageUsers";
 const queryClient = new QueryClient({
   defaultOptions: {
-    staleTime: Infinity,
-    cacheTime: Infinity,
+    staleTime: 0,
+    cacheTime: 0,
   },
 });
 
