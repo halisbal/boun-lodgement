@@ -4,6 +4,11 @@ ALLOWED_EMAILS = [
     "halis.bal@std.bogazici.edu.tr",
     "emre.sin@std.bogazici.edu.tr",
     "birkan.yilmaz@bogazici.edu.tr",
+    "akarun@bogazici.edu.tr",
+    "ersoy@bogazici.edu.tr",
+    "arzucan.ozgur@bogazici.edu.tr",
+    "say@bogazici.edu.tr",
+    "tuna.tugcu@gmail.com",
 ]
 
 
