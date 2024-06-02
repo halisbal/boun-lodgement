@@ -38,7 +38,7 @@ const App = () => {
                 <div className="flex items-center">
                   <Link to="/home" className="mx-4"> <img src="/boun_logo.svg" alt="Bogazici University Logo" className="h-8 w-auto" /> </Link>
                   <LoggedInHeader>
-                    <Link to="/logdements" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Lodgements </Link>
+                    <Link to="/lodgements" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Lodgements </Link>
                   </LoggedInHeader>
                   <LoggedInHeader>
                     <Link to="/apply" className="text-lg mx-4 text-black hover:text-gray-700 mr-4"> Apply </Link>
@@ -66,46 +66,18 @@ const App = () => {
           </header>
 
           <Routes>
-            <Route
-              path="/home"
-              element={
-                <ProtectedRoute>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            ></Route>
-            <Route path="/" element={<LoginPage />}></Route>
-            <Route
-              path="/logdements"
-              element={
-                <ProtectedRoute>
-                  <ListLodgementsPage />
-                </ProtectedRoute>
-              }
-            ></Route>
-            <Route
-              path="/apply"
-              element={
-                <ProtectedRoute>
-                  <ApplyPage />
-                </ProtectedRoute>
-              }
-            ></Route>
-            <Route
-              path="/my-applications"
-              element={
-                <ProtectedRoute>
-                  <ListApplicationsPage />
-                </ProtectedRoute>
-              }
-            ></Route>
-            <Route path="/login" element={<LoginPage />}></Route>
-            <Route path="/application/:id" element={<ApplicationDetailPage />}></Route>
-            <Route path="/edit-inventory" element={<EditInventoryPage />}></Route>
-            <Route path="/manage-applications" element={<ManageApplicationsPage />}></Route>
-            <Route path="/manage-application-detail/:id" element={<ManageApplicationsDetail />}></Route>
-            <Route path="/manage-users" element={<ManageUsers />}></Route>
-            <Route path="*" element={<div>Not Found</div>}></Route>
+            <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/lodgements" element={<ProtectedRoute><ListLodgementsPage /></ProtectedRoute>} />
+            <Route path="/apply" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
+            <Route path="/my-applications" element={<ProtectedRoute><ListApplicationsPage /></ProtectedRoute>} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/application/:id" element={<ApplicationDetailPage />} />
+            <Route path="/edit-inventory" element={<EditInventoryPage />} />
+            <Route path="/manage-applications" element={<ManageApplicationsPage />} />
+            <Route path="/manage-application-detail/:id" element={<ManageApplicationsDetail />} />
+            <Route path="/manage-users" element={<ManageUsers />} />
+            <Route path="*" element={<div>Not Found</div>} />
           </Routes>
         </QueryClientProvider>
       </BrowserRouter>

@@ -1,11 +1,12 @@
 import { Select, Option, Button, Accordion, AccordionBody, AccordionHeader, Tooltip } from "@material-tailwind/react";
-import DefaultTable from "./DefaultTable";
 import fetchQueues from "../fetches/fetchQueues";
 import { useQuery } from "@tanstack/react-query";
 import { apiService } from "../services/apiService";
 import { useState, useEffect } from "react";
 import { Input, Checkbox, Card, List, ListItem } from "@material-tailwind/react";
 import fetchScoringForm from "../fetches/fetchScoringForm";
+import MyAlert from "./MyAlert";
+import { useNavigate } from "react-router-dom";
 
 const ApplyPage = () => {
 
@@ -16,6 +17,10 @@ const ApplyPage = () => {
     const [evalStats, setEvalStats] = useState({});
     const [formValues, setFormValues] = useState({});
     const [open, setOpen] = useState(0);
+    const [alert, setAlert] = useState({ visible: false, message: "", type: "" });
+
+
+    const navigate = useNavigate();
 
     const handleOpen = (value) => {
         console.log(selectedQueue)
@@ -46,8 +51,24 @@ const ApplyPage = () => {
     }
 
     const applyQueue = () => {
-        apiService.post(`/queue/${selectedQueue}/apply/`);
+
+        if (selectedQueue === undefined) {
+            showAlert("Please select a queue first", "error");
+            return;
+        }
+
+        showAlert("Applying...", "info");
+        apiService.post(`/queue/${selectedQueue}/apply/`).then((response) => {
+            showAlert("Application completed successfully", "success");
+            setTimeout(() => {
+                navigate("/my-applications");
+            }, 500);
+            
+        }).catch((error) => {
+            showAlert("An error occured while applying to the queue", "error");
+        });
         console.log(selectedQueue);
+    
     }
 
     const handleChange = (id, event, type) => {
@@ -57,28 +78,41 @@ const ApplyPage = () => {
 
     const handleEvaluate = async (event) => {
         if (selectedQueue === undefined) {
-            alert("Please select a queue first");
+            showAlert("Please select a queue first", "error");
             return;
         }
 
+        showAlert("Evaluating...", "info");
         event.preventDefault();
-        console.log("Submitting", formValues);
         const arr = [];
         for (const [key, value] of Object.entries(formValues)) {
             arr.push({ scoring_form_item_id: key, answer: value });
         }
 
-        // Here you would typically use fetch or axios to send `formValues` to the server
-
         const response = await apiService.post(`/queue/${selectedQueue}/evaluate/`, arr)
+        showAlert("Evaluation completed successfully", "success");
         setEvalStats({ score: response.total_points, rank: response.rank, availability: response.approximate_availability });
         console.log(response);
 
     };
 
+    const closeAlert = () => {
+        setAlert({ visible: false, message: "", type: "" });
+    }
+
+    const showAlert = (message, type) => {
+        setAlert({ visible: true, message, type });
+
+        setTimeout(() => {
+            setAlert({ visible: false, message: "", type: "" });
+        }, 5000);
+    }
 
 
-    return (<div className="container flex justify-center mx-auto h-max items-center min-h-screen">
+
+    return (
+    <div className="container flex justify-center mx-auto h-max items-center min-h-screen">
+        {alert.visible && <MyAlert message={alert.message} type={alert.type} onClose={closeAlert} visible={alert.visible} />}
         <div className="p-5 my-10 shadow-md w-7/12 items-center flex justify-center flex-col">
             <div className="flex align-items-center items-center w-11/12 ">
                 <label>Başvuracağınız kategoriyi seçiniz</label>
