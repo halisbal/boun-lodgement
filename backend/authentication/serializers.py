@@ -26,8 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         return (
-            PersonalType(obj.role).label
-            if obj.role in PersonalType.values
+            PersonalType(obj.type).label
+            if obj.type in PersonalType.values
             else "Unknown"
         )
 
