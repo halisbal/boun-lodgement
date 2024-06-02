@@ -34,12 +34,23 @@ const ROLES = {
     2:"Manager",
     3:"Admin"
 }
+const ROLES_REVERSE = {
+    "User":1,
+    "Manager":2,
+    "Admin":3
+}
 
 const TYPES = {
     1:"Akademik",
     2:"İdari",
     3:"Görevli"
 }
+const TYPES_REVERSE = {
+    "Akademik":1,
+    "İdari":2,
+    "Görevli":3
+}
+
 
 const TABS = [
     {
@@ -65,7 +76,7 @@ const TABLE_HEAD = ["Id", "Name", "Email", "Role", "Type", "Is Active", "Join Da
 const ManageUsers = () => {
     const { data: users, isLoading, error } = useQuery(["all-users"], () => apiService.get(`/auth/user/`));
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(6);
     const [activeTab, setActiveTab] = useState("all");
     const [sortConfig, setSortConfig] = useState({ key: "id", direction: "ascending" });
     const [searchQuery, setSearchQuery] = useState("");
@@ -147,14 +158,9 @@ const ManageUsers = () => {
                             <Typography variant="h5" color="blue-gray">
                                 Users list
                             </Typography>
-                            <Typography color="gray" className="mt-1 font-normal">
-                                See information about all users
-                            </Typography>
                         </div>
                         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                            <Button className="flex items-center gap-3" size="sm">
-                                <UserPlusIcon strokeWidth={2} className="h-4 w-4" /> Add User
-                            </Button>
+                           
                         </div>
                     </div>
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
