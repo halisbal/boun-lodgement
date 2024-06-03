@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import pytz
 from rest_framework import serializers
 
