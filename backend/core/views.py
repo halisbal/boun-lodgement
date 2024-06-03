@@ -614,19 +614,17 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
 class AnnouncementListView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = Announcement.objects.filter(is_visible=True).order_by("-created_at")
 
     def list(self, request):
-        queryset = self.queryset
+        queryset = Announcement.objects.filter(is_visible=True).order_by("-created_at")
         serializer = AnnouncementSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
 class FaqComponentListView(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    queryset = FaqComponent.objects.filter(is_visible=True).order_by("order")
 
     def list(self, request):
-        queryset = self.queryset
+        queryset = FaqComponent.objects.filter(is_visible=True).order_by("order")
         serializer = FaqComponentSerializer(queryset, many=True)
         return Response(serializer.data)
