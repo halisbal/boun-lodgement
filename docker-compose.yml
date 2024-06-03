@@ -19,4 +19,4 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_BASE_ENDPOINT=http://localhost:8000
+      - VITE_BASE_ENDPOINT=http://51.20.53.162:8000

@@ -31,7 +31,7 @@ const FAQ = () => {
 
     return (
         <div className="w-full mx-auto mt-20">
-            <Typography variant="h2" color="blue-gray" className="mb-8 mt-8 font-bold">
+            <Typography variant="h3" color="blue-gray" className="mb-8 mt-8 font-bold">
                 F.A.Q.
             </Typography>
             {faqData.sort((a, b) => a.order - b.order).map((item, index) => (
