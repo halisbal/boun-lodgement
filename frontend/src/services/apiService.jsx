@@ -8,7 +8,7 @@ async function fetchAPI(endpoint, options = {}) {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Token ${authService.getToken()}`,
+      'Authorization': authService.getToken() !== null ? `Token ${authService.getToken()}` : null,
       ...options.headers,
     },
   });

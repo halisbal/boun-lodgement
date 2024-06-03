@@ -17,6 +17,7 @@ import ManagerHeader from "./components/ManagerHeader";
 import ManageApplicationsPage from "./components/ManageApplicationsPage";
 import ManageApplicationsDetail from "./components/ManageApplicationsDetail";
 import ManageUsers from "./components/ManageUsers";
+import AdminHeader from "./components/AdminHeader";
 const queryClient = new QueryClient({
   defaultOptions: {
     staleTime: 0,
@@ -52,9 +53,9 @@ const App = () => {
                   <ManagerHeader>
                     <Link to="/manage-applications" className="text-lg mx-4 hover:text-gray-700 mr-4"> Manage Applications </Link>
                   </ManagerHeader>
-                  <ManagerHeader>
+                  <AdminHeader>
                     <Link to="/manage-users" className="text-lg mx-4  hover:text-gray-700 mr-4"> Manage Users </Link>
-                  </ManagerHeader>
+                  </AdminHeader>
                 </div>
                 <div>
                   <div className="flex items-center">
@@ -66,7 +67,7 @@ const App = () => {
           </header>
 
           <Routes>
-            <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/" element={<LoginPage />} />
             <Route path="/lodgements" element={<ProtectedRoute><ListLodgementsPage /></ProtectedRoute>} />
             <Route path="/apply" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
